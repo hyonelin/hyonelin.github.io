@@ -5,7 +5,7 @@ export const personalInfo: PersonalInfo = {
   title: '全栈开发工程师',
   bio: '热爱技术，专注于 Web 开发和用户体验设计。在这里你可以了解我的项目和技术栈。',
   avatar: '/avatar.png',
-  skills: ['React', 'TypeScript', 'Node.js', 'Python', 'AWS', 'Docker', 'Git'],
+  skills: ['Power Automate', 'Power Apps', 'Power Pages', 'React', 'Python', 'MySQL', 'Docker', 'Git', 'JavaScript'],
 };
 
 export const contactLinks: ContactLink[] = [

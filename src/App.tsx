@@ -1,19 +1,13 @@
-import { HashRouter, Routes, Route } from 'react-router-dom';
-import Layout from './components/Layout';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
-import Projects from './pages/Projects';
-import Contact from './pages/Contact';
-import './App.css';
 
 function App() {
   return (
     <HashRouter>
       <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="projects" element={<Projects />} />
-          <Route path="contact" element={<Contact />} />
-        </Route>
+        <Route path="/zh-CN" element={<Home />} />
+        <Route path="/en-US" element={<Home />} />
+        <Route path="*" element={<Navigate to="/zh-CN" replace />} />
       </Routes>
     </HashRouter>
   );
