@@ -14,23 +14,38 @@ interface BlogPost {
   tags: string[]
 }
 
+interface BlogIndex {
+  zh: BlogPost[]
+  en: BlogPost[]
+}
+
 export function Blog() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(true)
+  const lang = i18n.language as 'zh' | 'en'
 
   useEffect(() => {
     fetch('/blogs/index.json')
       .then((res) => res.json())
-      .then((data: BlogPost[]) => {
-        const sorted = data.sort(
+      .then((data: BlogIndex) => {
+        const langPosts = data[lang] || data.zh || []
+        const sorted = [...langPosts].sort(
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         )
         setPosts(sorted)
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [])
+  }, [lang])
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  }
 
   return (
     <main className="relative min-h-screen bg-background px-6 py-12 sm:py-24">
@@ -64,13 +79,7 @@ export function Blog() {
                 >
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Calendar className="h-4 w-4" />
-                    <time dateTime={post.date}>
-                      {new Date(post.date).toLocaleDateString('zh-CN', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
-                    </time>
+                    <time dateTime={post.date}>{formatDate(post.date)}</time>
                   </div>
                   <h2 className="mt-2 text-xl font-semibold group-hover:text-primary">
                     {post.title}

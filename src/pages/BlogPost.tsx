@@ -16,12 +16,13 @@ interface PostMeta {
 }
 
 export function BlogPost() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { slug } = useParams<{ slug: string }>()
   const [content, setContent] = useState('')
   const [meta, setMeta] = useState<PostMeta | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  const lang = i18n.language
 
   useEffect(() => {
     if (!slug) return
@@ -72,6 +73,14 @@ export function BlogPost() {
       })
   }, [slug])
 
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  }
+
   if (loading) {
     return (
       <main className="relative min-h-screen bg-background px-6 py-12 sm:py-24">
@@ -120,13 +129,7 @@ export function BlogPost() {
             <header className="mb-8">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="h-4 w-4" />
-                <time dateTime={meta.date}>
-                  {new Date(meta.date).toLocaleDateString('zh-CN', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
-                </time>
+                <time dateTime={meta.date}>{formatDate(meta.date)}</time>
               </div>
               <h1 className="mt-2 text-3xl font-bold tracking-tight">
                 {meta.title}

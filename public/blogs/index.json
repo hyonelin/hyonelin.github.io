@@ -1,23 +1,41 @@
-[
-  {
-    "slug": "2024-12-25-hello-world",
-    "title": "Hello World - 我的第一篇博客",
-    "date": "2024-12-25",
-    "description": "欢迎来到我的博客，这是我的第一篇文章，分享一下建站的心路历程。",
-    "tags": ["生活", "博客"]
-  },
-  {
-    "slug": "2024-12-20-react-tips",
-    "title": "React 开发技巧分享",
-    "date": "2024-12-20",
-    "description": "分享一些在 React 开发中常用的技巧和最佳实践，帮助提升开发效率。",
-    "tags": ["React", "前端", "技术"]
-  },
-  {
-    "slug": "2024-12-15-typescript-basics",
-    "title": "TypeScript 入门指南",
-    "date": "2024-12-15",
-    "description": "TypeScript 基础知识介绍，从零开始学习类型系统。",
-    "tags": ["TypeScript", "前端", "技术"]
-  }
-]
+{
+  "zh": [
+    {
+      "slug": "2024-12-25-hello-world",
+      "title": "Hello World - 我的第一篇博客",
+      "date": "2024-12-25",
+      "description": "欢迎来到我的博客，这是我的第一篇文章，分享一下建站的心路历程。",
+      "tags": ["生活", "博客"]
+    },
+    {
+      "slug": "2024-12-20-react-tips",
+      "title": "React 开发技巧分享",
+      "date": "2024-12-20",
+      "description": "分享一些在 React 开发中常用的技巧和最佳实践，帮助提升开发效率。",
+      "tags": ["React", "前端", "技术"]
+    },
+    {
+      "slug": "2024-12-15-typescript-basics",
+      "title": "TypeScript 入门指南",
+      "date": "2024-12-15",
+      "description": "TypeScript 基础知识介绍，从零开始学习类型系统。",
+      "tags": ["TypeScript", "前端", "技术"]
+    }
+  ],
+  "en": [
+    {
+      "slug": "2024-12-25-hello-world-en",
+      "title": "Hello World - My First Blog Post",
+      "date": "2024-12-25",
+      "description": "Welcome to my blog! This is my first post, sharing my journey of building this site.",
+      "tags": ["Life", "Blog"]
+    },
+    {
+      "slug": "2024-12-18-getting-started-with-react",
+      "title": "Getting Started with React",
+      "date": "2024-12-18",
+      "description": "A beginner's guide to React, covering the basics and best practices.",
+      "tags": ["React", "Frontend", "Tutorial"]
+    }
+  ]
+}
