@@ -1,26 +1,17 @@
-import { Navbar } from '@/components/Navbar'
-import { Hero } from '@/sections/Hero'
-import { About } from '@/sections/About'
-import { Skills } from '@/sections/Skills'
-import { Work } from '@/sections/Work'
-import { Education } from '@/sections/Education'
-import { Projects } from '@/sections/Projects'
-import { Contact } from '@/sections/Contact'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { Home } from '@/pages/Home'
+import { Blog } from '@/pages/Blog'
+import { BlogPost } from '@/pages/BlogPost'
 
 function App() {
   return (
-    <main className="relative min-h-screen bg-background px-6 py-12 sm:py-24">
-      <div className="mx-auto flex max-w-2xl flex-col space-y-10">
-        <Hero />
-        <About />
-        <Skills />
-        <Work />
-        <Education />
-        <Projects />
-        <Contact />
-      </div>
-      <Navbar />
-    </main>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/blog/:slug" element={<BlogPost />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
