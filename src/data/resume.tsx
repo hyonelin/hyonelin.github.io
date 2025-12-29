@@ -1,5 +1,5 @@
 import { GitHubLogoIcon, LinkedInLogoIcon } from '@radix-ui/react-icons'
-import { Mail, User, Briefcase, GraduationCap, FolderKanban, MessageCircle, Home, NotebookPen } from 'lucide-react'
+import { Mail, Home, NotebookPen } from 'lucide-react'
 
 export const DATA = {
   name: "William Wen",
