@@ -1,0 +1,26 @@
+{
+  "greeting": "Hi, I'm William (文宣霖）",
+  "nav": {
+    "home": "Home",
+    "projects": "Projects",
+    "contact": "Contact"
+  },
+  "home": {
+    "skills": "Tech Stack",
+    "featured": "Featured Projects",
+    "viewAll": "View All Projects →"
+  },
+  "projects": {
+    "title": "My Projects",
+    "search": "Search projects...",
+    "allTags": "All Technologies",
+    "loadFailed": "Failed to load"
+  },
+  "contact": {
+    "title": "Contact Me",
+    "methods": "Contact Methods",
+    "pages": "Personal Pages",
+    "scanWechat": "Scan to add WeChat"
+  },
+  "footer": "Built with React & Vite."
+}

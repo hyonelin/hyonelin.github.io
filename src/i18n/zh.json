@@ -1,0 +1,26 @@
+{
+  "greeting": "你好，我是文宣霖 (William)",
+  "nav": {
+    "home": "首页",
+    "projects": "作品",
+    "contact": "联系"
+  },
+  "home": {
+    "skills": "技术栈",
+    "featured": "精选作品",
+    "viewAll": "查看全部作品 →"
+  },
+  "projects": {
+    "title": "我的作品",
+    "search": "搜索项目名称...",
+    "allTags": "全部技术栈",
+    "loadFailed": "加载失败"
+  },
+  "contact": {
+    "title": "联系我",
+    "methods": "联系方式",
+    "pages": "个人页面",
+    "scanWechat": "扫码添加微信"
+  },
+  "footer": "Built with React & Vite."
+}
