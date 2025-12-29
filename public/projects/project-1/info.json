@@ -1,8 +1,0 @@
-{
-  "id": "project-1",
-  "title": "示例项目一",
-  "description": "这是一个示例项目，展示如何添加新作品",
-  "image": "preview.png",
-  "markdown": "README.md",
-  "tags": ["React", "TypeScript"]
-}

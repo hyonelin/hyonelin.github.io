@@ -1,34 +1,40 @@
-# 示例项目一
+# Project One
 
-这是一个示例项目的详细说明。
+This is a sample project README. Replace this content with your actual project description.
 
-## 项目简介
+## Overview
 
-在这里描述你的项目背景和目标。
+Describe what this project does and why it's useful.
 
-## 技术栈
+## Features
+
+- Feature 1: Description
+- Feature 2: Description
+- Feature 3: Description
+
+## Technologies Used
 
 - React
 - TypeScript
-- Vite
+- Tailwind CSS
 
-## 功能特点
-
-1. 功能一
-2. 功能二
-3. 功能三
-
-## 截图
-
-![项目截图](preview.png)
-
-## 如何运行
+## Getting Started
 
 ```bash
+# Clone the repository
+git clone https://github.com/yourusername/project-1
+
+# Install dependencies
 npm install
+
+# Start development server
 npm run dev
 ```
 
-## 联系方式
+## Screenshots
 
-如有问题，欢迎联系我！
+Add screenshots of your project here.
+
+## License
+
+MIT License

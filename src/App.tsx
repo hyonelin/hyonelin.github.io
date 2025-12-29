@@ -1,16 +1,29 @@
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Home from './pages/Home';
+import { Navbar } from '@/components/Navbar'
+import { ThemeToggle } from '@/components/ThemeToggle'
+import { Hero } from '@/sections/Hero'
+import { About } from '@/sections/About'
+import { Skills } from '@/sections/Skills'
+import { Work } from '@/sections/Work'
+import { Education } from '@/sections/Education'
+import { Projects } from '@/sections/Projects'
+import { Contact } from '@/sections/Contact'
 
 function App() {
   return (
-    <HashRouter>
-      <Routes>
-        <Route path="/zh-CN" element={<Home />} />
-        <Route path="/en-US" element={<Home />} />
-        <Route path="*" element={<Navigate to="/zh-CN" replace />} />
-      </Routes>
-    </HashRouter>
-  );
+    <main className="relative min-h-screen bg-background px-6 py-12 sm:py-24">
+      <ThemeToggle />
+      <div className="mx-auto flex max-w-2xl flex-col space-y-10">
+        <Hero />
+        <About />
+        <Skills />
+        <Work />
+        <Education />
+        <Projects />
+        <Contact />
+      </div>
+      <Navbar />
+    </main>
+  )
 }
 
-export default App;
+export default App
