@@ -4,15 +4,19 @@ import { Moon, Sun, ArrowUp } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Link, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 function DockSeparator() {
-  return <div className="mx-1 h-8 w-px bg-border" />
+  return <div className="mx-2 h-8 w-px bg-neutral-300 dark:bg-neutral-600" />
 }
 
 export function Navbar() {
+  const { t, i18n } = useTranslation()
   const [isDark, setIsDark] = useState(false)
   const [showScrollTop, setShowScrollTop] = useState(false)
   const location = useLocation()
+
+  const currentLang = i18n.language
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme')
@@ -37,11 +41,16 @@ export function Navbar() {
     localStorage.setItem('theme', newIsDark ? 'dark' : 'light')
   }
 
+  const toggleLanguage = () => {
+    const newLang = currentLang === 'zh' ? 'en' : 'zh'
+    i18n.changeLanguage(newLang)
+    localStorage.setItem('language', newLang)
+  }
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  // 判断是否在首页
   const isHomePage = location.pathname === '/'
 
   return (
@@ -56,15 +65,15 @@ export function Navbar() {
         {DATA.navbar.map((item) => {
           const Icon = item.icon
           const isRoute = 'isRoute' in item && item.isRoute
+          const label = t(item.labelKey)
 
-          // 如果是路由链接
           if (isRoute) {
             return (
               <DockIcon key={item.href}>
                 <Link
                   to={item.href}
                   className="flex items-center justify-center text-foreground/80 hover:text-foreground"
-                  title={item.label}
+                  title={label}
                 >
                   <Icon className="h-5 w-5" />
                 </Link>
@@ -72,14 +81,13 @@ export function Navbar() {
             )
           }
 
-          // 如果不在首页，锚点链接需要先跳转到首页
           if (!isHomePage && item.href.startsWith('#')) {
             return (
               <DockIcon key={item.href}>
                 <Link
                   to={`/${item.href}`}
                   className="flex items-center justify-center text-foreground/80 hover:text-foreground"
-                  title={item.label}
+                  title={label}
                 >
                   <Icon className="h-5 w-5" />
                 </Link>
@@ -87,13 +95,12 @@ export function Navbar() {
             )
           }
 
-          // 首页的锚点链接
           return (
             <DockIcon key={item.href}>
               <a
                 href={item.href}
                 className="flex items-center justify-center text-foreground/80 hover:text-foreground"
-                title={item.label}
+                title={label}
               >
                 <Icon className="h-5 w-5" />
               </a>
@@ -102,6 +109,12 @@ export function Navbar() {
         })}
 
         <DockSeparator />
+
+        <DockIcon onClick={toggleLanguage} className="hover:bg-secondary">
+          <span className="text-base" title={currentLang === 'zh' ? 'Switch to English' : '切换到中文'}>
+            {currentLang === 'zh' ? '🇨🇳' : '🇺🇸'}
+          </span>
+        </DockIcon>
 
         <DockIcon onClick={toggleTheme} className="hover:bg-secondary">
           {isDark ? (

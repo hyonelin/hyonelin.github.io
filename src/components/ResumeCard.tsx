@@ -42,10 +42,8 @@ export function ResumeCard({
       )}
       onClick={handleClick}
     >
-      {/* Timeline line */}
       <div className="absolute left-5 top-12 h-full w-px bg-border" />
 
-      {/* Logo */}
       <Avatar
         src={logoUrl}
         alt={altText}
@@ -53,7 +51,6 @@ export function ResumeCard({
         className="z-10 h-10 w-10 border bg-background"
       />
 
-      {/* Content */}
       <div className="flex-1">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1">

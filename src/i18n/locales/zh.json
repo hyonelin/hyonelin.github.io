@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "home": "首页",
+    "about": "关于",
+    "work": "经历",
+    "education": "教育",
+    "projects": "项目",
+    "blog": "博客",
+    "contact": "联系"
+  },
+  "hero": {
+    "greeting": "Hi, I'm {{name}} 👋"
+  },
+  "about": {
+    "title": "关于我"
+  },
+  "skills": {
+    "title": "技能"
+  },
+  "work": {
+    "title": "工作经历"
+  },
+  "education": {
+    "title": "教育背景"
+  },
+  "projects": {
+    "title": "我的项目",
+    "description": "这里是我参与开发的一些项目，涵盖了不同的技术栈和应用场景。",
+    "website": "网站",
+    "source": "源码"
+  },
+  "contact": {
+    "title": "联系我",
+    "description": "想要交流或合作？欢迎通过以下方式联系我，我会尽快回复。"
+  },
+  "blog": {
+    "title": "博客",
+    "description": "记录学习、分享经验、整理思考",
+    "backToHome": "返回首页",
+    "backToList": "返回博客列表",
+    "loading": "加载中...",
+    "noPosts": "暂无文章",
+    "notFound": "文章未找到",
+    "notFoundDesc": "抱歉，您访问的文章不存在。"
+  },
+  "common": {
+    "present": "至今"
+  }
+}

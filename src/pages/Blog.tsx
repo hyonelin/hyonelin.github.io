@@ -4,6 +4,7 @@ import { BlurFade } from '@/components/BlurFade'
 import { Navbar } from '@/components/Navbar'
 import { Badge } from '@/components/Badge'
 import { ArrowLeft, Calendar } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface BlogPost {
   slug: string
@@ -14,6 +15,7 @@ interface BlogPost {
 }
 
 export function Blog() {
+  const { t } = useTranslation()
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -21,7 +23,6 @@ export function Blog() {
     fetch('/blogs/index.json')
       .then((res) => res.json())
       .then((data: BlogPost[]) => {
-        // 按日期降序排列
         const sorted = data.sort(
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         )
@@ -40,22 +41,20 @@ export function Blog() {
             className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
-            返回首页
+            {t('blog.backToHome')}
           </Link>
         </BlurFade>
 
         <BlurFade delay={0.08}>
-          <h1 className="text-3xl font-bold tracking-tight">博客</h1>
-          <p className="mt-2 text-muted-foreground">
-            记录学习、分享经验、整理思考
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('blog.title')}</h1>
+          <p className="mt-2 text-muted-foreground">{t('blog.description')}</p>
         </BlurFade>
 
         <div className="mt-8 space-y-6">
           {loading ? (
-            <p className="text-muted-foreground">加载中...</p>
+            <p className="text-muted-foreground">{t('blog.loading')}</p>
           ) : posts.length === 0 ? (
-            <p className="text-muted-foreground">暂无文章</p>
+            <p className="text-muted-foreground">{t('blog.noPosts')}</p>
           ) : (
             posts.map((post, index) => (
               <BlurFade key={post.slug} delay={0.12 + index * 0.05}>

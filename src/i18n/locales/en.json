@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "work": "Work",
+    "education": "Education",
+    "projects": "Projects",
+    "blog": "Blog",
+    "contact": "Contact"
+  },
+  "hero": {
+    "greeting": "Hi, I'm {{name}} 👋"
+  },
+  "about": {
+    "title": "About Me"
+  },
+  "skills": {
+    "title": "Skills"
+  },
+  "work": {
+    "title": "Work Experience"
+  },
+  "education": {
+    "title": "Education"
+  },
+  "projects": {
+    "title": "My Projects",
+    "description": "Here are some projects I've worked on, covering various tech stacks and use cases.",
+    "website": "Website",
+    "source": "Source"
+  },
+  "contact": {
+    "title": "Contact Me",
+    "description": "Want to chat or collaborate? Feel free to reach out through any of the following channels."
+  },
+  "blog": {
+    "title": "Blog",
+    "description": "Learning notes, sharing experiences, organizing thoughts",
+    "backToHome": "Back to Home",
+    "backToList": "Back to Blog",
+    "loading": "Loading...",
+    "noPosts": "No posts yet",
+    "notFound": "Post Not Found",
+    "notFoundDesc": "Sorry, the post you're looking for doesn't exist."
+  },
+  "common": {
+    "present": "Present"
+  }
+}

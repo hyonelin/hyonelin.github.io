@@ -6,6 +6,7 @@ import { BlurFade } from '@/components/BlurFade'
 import { Navbar } from '@/components/Navbar'
 import { Badge } from '@/components/Badge'
 import { ArrowLeft, Calendar } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface PostMeta {
   title: string
@@ -15,6 +16,7 @@ interface PostMeta {
 }
 
 export function BlogPost() {
+  const { t } = useTranslation()
   const { slug } = useParams<{ slug: string }>()
   const [content, setContent] = useState('')
   const [meta, setMeta] = useState<PostMeta | null>(null)
@@ -30,7 +32,6 @@ export function BlogPost() {
         return res.text()
       })
       .then((text) => {
-        // 解析 frontmatter
         const frontmatterRegex = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/
         const match = text.match(frontmatterRegex)
 
@@ -38,18 +39,15 @@ export function BlogPost() {
           const frontmatter = match[1]
           const markdown = match[2]
 
-          // 简单解析 YAML frontmatter
           const metaObj: Record<string, unknown> = {}
           frontmatter.split('\n').forEach((line) => {
             const colonIndex = line.indexOf(':')
             if (colonIndex > 0) {
               const key = line.slice(0, colonIndex).trim()
               let value = line.slice(colonIndex + 1).trim()
-              // 移除引号
               if (value.startsWith('"') && value.endsWith('"')) {
                 value = value.slice(1, -1)
               }
-              // 解析数组
               if (value.startsWith('[') && value.endsWith(']')) {
                 metaObj[key] = value
                   .slice(1, -1)
@@ -78,7 +76,7 @@ export function BlogPost() {
     return (
       <main className="relative min-h-screen bg-background px-6 py-12 sm:py-24">
         <div className="mx-auto max-w-2xl">
-          <p className="text-muted-foreground">加载中...</p>
+          <p className="text-muted-foreground">{t('blog.loading')}</p>
         </div>
         <Navbar />
       </main>
@@ -94,12 +92,10 @@ export function BlogPost() {
             className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
-            返回博客列表
+            {t('blog.backToList')}
           </Link>
-          <h1 className="text-2xl font-bold">文章未找到</h1>
-          <p className="mt-2 text-muted-foreground">
-            抱歉，您访问的文章不存在。
-          </p>
+          <h1 className="text-2xl font-bold">{t('blog.notFound')}</h1>
+          <p className="mt-2 text-muted-foreground">{t('blog.notFoundDesc')}</p>
         </div>
         <Navbar />
       </main>
@@ -115,7 +111,7 @@ export function BlogPost() {
             className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
-            返回博客列表
+            {t('blog.backToList')}
           </Link>
         </BlurFade>
 

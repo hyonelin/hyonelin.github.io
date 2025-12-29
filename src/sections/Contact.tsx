@@ -1,17 +1,18 @@
 import { BlurFade } from '@/components/BlurFade'
 import { DATA } from '@/data/resume'
+import { useTranslation } from 'react-i18next'
 
 const BLUR_FADE_DELAY = 0.04
 
 export function Contact() {
+  const { t } = useTranslation()
+
   return (
     <section id="contact" className="mx-auto w-full max-w-2xl pb-24">
       <BlurFade delay={BLUR_FADE_DELAY * 18}>
         <div className="space-y-3">
-          <h2 className="text-xl font-bold">联系我</h2>
-          <p className="text-muted-foreground">
-            想要交流或合作？欢迎通过以下方式联系我，我会尽快回复。
-          </p>
+          <h2 className="text-xl font-bold">{t('contact.title')}</h2>
+          <p className="text-muted-foreground">{t('contact.description')}</p>
         </div>
       </BlurFade>
       <BlurFade delay={BLUR_FADE_DELAY * 19}>

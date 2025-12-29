@@ -1,14 +1,18 @@
 import { BlurFade } from '@/components/BlurFade'
 import { ResumeCard } from '@/components/ResumeCard'
-import { DATA } from '@/data/resume'
+import { DATA, getLocalizedText } from '@/data/resume'
+import { useTranslation } from 'react-i18next'
 
 const BLUR_FADE_DELAY = 0.04
 
 export function Education() {
+  const { t, i18n } = useTranslation()
+  const lang = i18n.language
+
   return (
     <section id="education" className="mx-auto w-full max-w-2xl">
       <BlurFade delay={BLUR_FADE_DELAY * 12}>
-        <h2 className="text-xl font-bold">教育背景</h2>
+        <h2 className="text-xl font-bold">{t('education.title')}</h2>
       </BlurFade>
       <div className="mt-4">
         {DATA.education.map((edu, index) => (
@@ -17,7 +21,7 @@ export function Education() {
               logoUrl={edu.logoUrl}
               altText={edu.school}
               title={edu.school}
-              subtitle={edu.degree}
+              subtitle={getLocalizedText(edu.degree, lang)}
               href={edu.href}
               period={`${edu.start} - ${edu.end}`}
             />
