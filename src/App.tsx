@@ -1,5 +1,4 @@
 import { Navbar } from '@/components/Navbar'
-import { ThemeToggle } from '@/components/ThemeToggle'
 import { Hero } from '@/sections/Hero'
 import { About } from '@/sections/About'
 import { Skills } from '@/sections/Skills'
@@ -11,7 +10,6 @@ import { Contact } from '@/sections/Contact'
 function App() {
   return (
     <main className="relative min-h-screen bg-background px-6 py-12 sm:py-24">
-      <ThemeToggle />
       <div className="mx-auto flex max-w-2xl flex-col space-y-10">
         <Hero />
         <About />
