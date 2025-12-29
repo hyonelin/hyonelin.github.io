@@ -14,23 +14,17 @@ interface BlogPost {
   tags: string[]
 }
 
-interface BlogIndex {
-  zh: BlogPost[]
-  en: BlogPost[]
-}
-
 export function Blog() {
   const { t, i18n } = useTranslation()
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(true)
-  const lang = i18n.language as 'zh' | 'en'
+  const lang = i18n.language === 'zh' ? 'cn' : 'en'
 
   useEffect(() => {
-    fetch('/blogs/index.json')
+    fetch(`/blogs/${lang}/index.json`)
       .then((res) => res.json())
-      .then((data: BlogIndex) => {
-        const langPosts = data[lang] || data.zh || []
-        const sorted = [...langPosts].sort(
+      .then((data: BlogPost[]) => {
+        const sorted = [...data].sort(
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         )
         setPosts(sorted)
@@ -40,7 +34,7 @@ export function Blog() {
   }, [lang])
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', {
+    return new Date(dateStr).toLocaleDateString(lang === 'cn' ? 'zh-CN' : 'en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',

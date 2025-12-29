@@ -1,0 +1,16 @@
+[
+  {
+    "slug": "2024-12-25-hello-world",
+    "title": "Hello World - My First Blog Post",
+    "date": "2024-12-25",
+    "description": "Welcome to my blog! This is my first post, sharing my journey of building this site.",
+    "tags": ["Life", "Blog"]
+  },
+  {
+    "slug": "2024-12-18-getting-started-with-react",
+    "title": "Getting Started with React",
+    "date": "2024-12-18",
+    "description": "A beginner's guide to React, covering the basics and best practices.",
+    "tags": ["React", "Frontend", "Tutorial"]
+  }
+]

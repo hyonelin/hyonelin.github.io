@@ -18,11 +18,11 @@ export function Work() {
         {DATA.work.map((work, index) => (
           <BlurFade key={work.company} delay={BLUR_FADE_DELAY * 9 + index * 0.05}>
             <ResumeCard
-              logoUrl={work.logoUrl}
+              logoUrl={(work as any).logoUrl || ""}
               altText={work.company}
               title={work.company}
               subtitle={getLocalizedText(work.title, lang)}
-              href={work.href}
+              href={(work as any).href || ""}
               badges={work.badges}
               period={`${getLocalizedText(work.start, lang)} - ${work.end ? getLocalizedText(work.end, lang) : t('common.present')}`}
               description={getLocalizedText(work.description, lang)}

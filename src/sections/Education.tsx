@@ -23,7 +23,7 @@ export function Education() {
               title={edu.school}
               subtitle={getLocalizedText(edu.degree, lang)}
               href={edu.href}
-              period={`${edu.start} - ${edu.end}`}
+              period={`${getLocalizedText(edu.start, lang)} - ${getLocalizedText(edu.end, lang)}`}
             />
           </BlurFade>
         ))}

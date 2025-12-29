@@ -1,18 +1,19 @@
 import { GitHubLogoIcon, LinkedInLogoIcon } from '@radix-ui/react-icons'
 import { Mail, Home, NotebookPen } from 'lucide-react'
+import { WeChatIcon } from '@/components/icons/WeChatIcon'
 
 export const DATA = {
   name: "William Wen",
   initials: "WW",
-  url: "https://yoursite.com",
+  url: "https://hyonelin.github.io",
   location: {
     zh: "上海, 中国",
     en: "Shanghai, China",
   },
   locationLink: "https://www.google.com/maps",
   description: {
-    zh: "软件工程师 | 热爱技术与创新",
-    en: "Software Engineer | Passionate about Tech & Innovation",
+    zh: "IT 技术支持工程师 & 软件工程师",
+    en: "IT Support Technician & Software Engineer",
   },
   summary: {
     zh: "我是一名充满热情的软件工程师，专注于构建优秀的用户体验和高质量的代码。我喜欢探索新技术，解决复杂问题，并与团队合作创造有价值的产品。",
@@ -50,8 +51,14 @@ export const DATA = {
       },
       {
         name: "LinkedIn",
-        url: "https://linkedin.com/in/wen_xuanlin",
+        url: "https://linkedin.com/in/xuanlin-wen",
         icon: LinkedInLogoIcon,
+      },
+      {
+        name: "WeChat",
+        url: "#wechat",
+        icon: WeChatIcon,
+        isWechat: true,
       },
       {
         name: "Email",
@@ -70,7 +77,7 @@ export const DATA = {
         en: "Shanghai",
       },
       title: {
-        zh: "IT 支持技术员",
+        zh: "IT 技术支持工程师",
         en: "IT Support Technician",
       },
       logoUrl: "/logos/tesla.png",
@@ -85,55 +92,81 @@ export const DATA = {
       },
     },
     {
+      company: "大连盛捷国际货运代理有限公司",
+      href: "",
+      badges: [],
+      location: {
+        zh: "辽宁大连",
+        en: "Dalian, Liaoning",
+      },
+      title: {
+        zh: "IT运维",
+        en: "IT Operation",
+      },
+      logoUrl: "",
+      start: {
+        zh: "2021年9月",
+        en: "Sep 2021",
+      },
+      end: {
+        zh: "2022年1月",
+        en: "Jan 2022",
+      },
+      description: {
+        zh: "负责维护公司网络、电脑、打印机等软硬件，以确保公司业务正常进行。",
+        en: "Responsible for maintaining the company's network, computers, printers, and other hardware and software to ensure the normal operation of the company's business.",
+      },
+    },
+    {
+      company: "Lucky	Joint	Construction Pte. Ltd.",
+      href: "www.luckyjoint.com.sg",
+      badges: [],
+      location: {
+        zh: "新加坡",
+        en: "Singapore",
+      },
+      title: {
+        zh: "Civil officer",
+        en: "Civil officer",
+      },
+      logoUrl: "/logos/lucky-joint.jpg",
+      start: {
+        zh: "2020年3月",
+        en: "Mar 2020",
+      },
+      end: {
+        zh: "2020年7月",
+        en: "Jul 2020",
+      },
+      description: {
+        zh: "绘制电信线缆施工图（CAD），绘制施工细节及电缆走向图",
+        en: "Draw construction drawings (CAD) for telecommunications cables, including construction details and cable routing diagrams.",
+      },
+    },
+    {
       company: "Partea",
       href: "https://another-company.com",
       badges: [],
       location: {
-        zh: "北京",
-        en: "Beijing",
+        zh: "新加坡",
+        en: "Singapore",
       },
       title: {
-        zh: "软件工程师",
-        en: "Software Engineer",
+        zh: "IT及市场宣传部主管",
+        en: "Head of IT and Marketing",
       },
       logoUrl: "/logos/partea.jpeg",
       start: {
-        zh: "2020年6月",
-        en: "Jun 2020",
+        zh: "2018年2月",
+        en: "Feb 2018",
       },
       end: {
-        zh: "2021年12月",
-        en: "Dec 2021",
+        zh: "2020年3月",
+        en: "Mar 2020",
       },
       description: {
-        zh: "参与电商平台的开发，实现了订单管理、支付集成等核心功能。使用 Python 和 Django 构建后端服务，处理日均百万级请求。",
-        en: "Participated in e-commerce platform development, implementing core features like order management and payment integration. Built backend services using Python and Django, handling millions of daily requests.",
-      },
-    },
-    {
-      company: "Startup",
-      href: "https://startup.com",
-      badges: [],
-      location: {
-        zh: "上海",
-        en: "Shanghai",
-      },
-      title: {
-        zh: "初级开发工程师",
-        en: "Junior Developer",
-      },
-      logoUrl: "/logos/startup.png",
-      start: {
-        zh: "2019年7月",
-        en: "Jul 2019",
-      },
-      end: {
-        zh: "2020年5月",
-        en: "May 2020",
-      },
-      description: {
-        zh: "作为全栈开发工程师，参与了多个项目的开发。学习并应用了敏捷开发方法，提升了团队协作效率。",
-        en: "As a full-stack developer, participated in multiple projects. Learned and applied agile development methods, improving team collaboration efficiency.",
+        zh: "独立调研并部署收银系统，独立使用HTML开发官网，部署公司总部基础网络服务架构（包括但不限于网络、文件存储服务器、监控摄像头等）。并负责门店巡检，主要负责检查IT系统以及运营情况。",
+        en: "Independently researched and deployed the POS system, independently developed the official website using HTML, and deployed the company headquarters' basic network service architecture (including but not limited to network, file storage servers, surveillance cameras, etc.). Also responsible for store inspections, primarily checking the IT system and operational status.",
       },
     },
   ],
@@ -142,88 +175,81 @@ export const DATA = {
       school: "MDIS",
       href: "https://www.mdis.edu.sg/",
       degree: {
-        zh: "计算机科学与技术 学士学位",
-        en: "Bachelor's Degree in Computer Science",
+        zh: "信息技术理学士学位",
+        en: "Bachelor of Science (Hons) Information Technology",
       },
       logoUrl: "/logos/mdis.png",
-      start: "2020",
-      end: "2021",
+      start: {
+        zh: "2020年09月",
+        en: "Sep 2020",
+      },
+      end: {
+        zh: "2021年06月",
+        en: "Jun 2021",
+      },
     },
     {
       school: "BCA Academy",
       href: "https://www.bcaa.edu.sg/",
       degree: {
-        zh: "计算机科学与技术 学士学位",
-        en: "Bachelor's Degree in Computer Science",
+        zh: "建筑信息技术",
+        en: "Diploma in Construction Information Technology",
       },
       logoUrl: "/logos/bcaa.png",
-      start: "2015",
-      end: "2018",
+      start: {
+        zh: "2015年03月",
+        en: "Mar 2015",
+      },
+      end: {
+        zh: "2018年10月",
+        en: "Oct 2018",
+      },
     },
   ],
   projects: [
+    // {
+    //   title: {
+    //     zh: "项目一",
+    //     en: "Project One",
+    //   },
+    //   href: "https://project1.com",
+    //   dates: {
+    //     zh: "2024年1月 - 2024年3月",
+    //     en: "Jan 2024 - Mar 2024",
+    //   },
+    //   active: true,
+    //   description: {
+    //     zh: "一个基于 AI 的智能助手应用，帮助用户提高工作效率。集成了 OpenAI API，支持多种对话场景。",
+    //     en: "An AI-powered smart assistant app that helps users improve productivity. Integrated with OpenAI API, supporting various conversation scenarios.",
+    //   },
+    //   technologies: ["React", "TypeScript", "Node.js", "OpenAI", "TailwindCSS"],
+    //   links: [
+    //     { type: "website", href: "https://project1.com" },
+    //     { type: "source", href: "https://github.com/yourusername/project1" },
+    //   ],
+    //   image: "/projects/project-1/cover.png",
+    // },
     {
       title: {
-        zh: "项目一",
-        en: "Project One",
+        zh: "施工中。。。",
+        en: "Under Construction...",
       },
-      href: "https://project1.com",
+      href: "https://hyonelin.github.io",
       dates: {
-        zh: "2024年1月 - 2024年3月",
-        en: "Jan 2024 - Mar 2024",
+        zh: "2024年1月 - 至今",
+        en: "Jan 2024 - Present",
       },
       active: true,
       description: {
-        zh: "一个基于 AI 的智能助手应用，帮助用户提高工作效率。集成了 OpenAI API，支持多种对话场景。",
-        en: "An AI-powered smart assistant app that helps users improve productivity. Integrated with OpenAI API, supporting various conversation scenarios.",
+        zh: "即将为您呈现，烦请您稍后再来~",
+        en: "It will be presented to you shortly, please come back later~",
       },
-      technologies: ["React", "TypeScript", "Node.js", "OpenAI", "TailwindCSS"],
+      technologies: ["React maybe?"],
       links: [
-        { type: "website", href: "https://project1.com" },
-        { type: "source", href: "https://github.com/yourusername/project1" },
+        { type: "website", href: "https://hyonelin.github.io" },
+        { type: "source", href: "https://hyonelin.github.io" },
       ],
-      image: "/projects/project-1/cover.png",
-    },
-    {
-      title: {
-        zh: "项目二",
-        en: "Project Two",
-      },
-      href: "https://project2.com",
-      dates: {
-        zh: "2023年6月 - 2023年12月",
-        en: "Jun 2023 - Dec 2023",
-      },
-      active: true,
-      description: {
-        zh: "一个开源的数据可视化工具，支持多种图表类型和数据源。被多家企业采用，GitHub 星标超过 1000。",
-        en: "An open-source data visualization tool supporting multiple chart types and data sources. Adopted by many enterprises with 1000+ GitHub stars.",
-      },
-      technologies: ["Vue.js", "D3.js", "Python", "FastAPI", "PostgreSQL"],
-      links: [
-        { type: "website", href: "https://project2.com" },
-        { type: "source", href: "https://github.com/yourusername/project2" },
-      ],
-      image: "/projects/project-2/cover.png",
-    },
-    {
-      title: {
-        zh: "项目三",
-        en: "Project Three",
-      },
-      href: "https://project3.com",
-      dates: {
-        zh: "2023年1月 - 2023年5月",
-        en: "Jan 2023 - May 2023",
-      },
-      active: false,
-      description: {
-        zh: "一个移动端优先的电商应用，支持商品浏览、购物车、在线支付等功能。使用 React Native 开发，同时支持 iOS 和 Android。",
-        en: "A mobile-first e-commerce app supporting product browsing, shopping cart, and online payment. Built with React Native for both iOS and Android.",
-      },
-      technologies: ["React Native", "TypeScript", "Redux", "Stripe", "Firebase"],
-      links: [{ type: "website", href: "https://project3.com" }],
-      image: "/projects/project-3/cover.png",
+      // image: "/projects/project-1/cover.png",
     },
   ],
 } as const

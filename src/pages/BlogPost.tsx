@@ -22,12 +22,12 @@ export function BlogPost() {
   const [meta, setMeta] = useState<PostMeta | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
-  const lang = i18n.language
+  const lang = i18n.language === 'zh' ? 'cn' : 'en'
 
   useEffect(() => {
     if (!slug) return
 
-    fetch(`/blogs/${slug}.md`)
+    fetch(`/blogs/${lang}/${slug}.md`)
       .then((res) => {
         if (!res.ok) throw new Error('Not found')
         return res.text()
@@ -71,10 +71,10 @@ export function BlogPost() {
         setError(true)
         setLoading(false)
       })
-  }, [slug])
+  }, [slug, lang])
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', {
+    return new Date(dateStr).toLocaleDateString(lang === 'cn' ? 'zh-CN' : 'en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
