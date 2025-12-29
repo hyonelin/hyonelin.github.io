@@ -1,10 +1,10 @@
 import { Github, Linkedin, Mail, Twitter } from 'lucide-react'
 
 export const DATA = {
-  name: "Your Name",
-  initials: "YN",
+  name: "William Wen",
+  initials: "WW",
   url: "https://yoursite.com",
-  location: "Your City, Country",
+  location: "Shanghai, China",
   locationLink: "https://www.google.com/maps",
   description: "软件工程师 | 热爱技术与创新",
   summary:
@@ -34,12 +34,12 @@ export const DATA = {
     social: [
       {
         name: "GitHub",
-        url: "https://github.com/yourusername",
+        url: "https://github.com/hyonelin",
         icon: Github,
       },
       {
         name: "LinkedIn",
-        url: "https://linkedin.com/in/yourusername",
+        url: "https://linkedin.com/in/wen_xuanlin",
         icon: Linkedin,
       },
       {
@@ -49,7 +49,7 @@ export const DATA = {
       },
       {
         name: "Email",
-        url: "mailto:hello@example.com",
+        url: "mailto:wen_xuanlin@outlook.com",
         icon: Mail,
       },
     ],
@@ -62,13 +62,13 @@ export const DATA = {
       location: "上海",
       title: "IT Support Technician",
       logoUrl: "/logos/company.png",
-      start: "2022年1月",
+      start: "2022年4月",
       end: "至今",
       description:
         "负责核心产品的架构设计和开发，使用 React、TypeScript 和 Node.js 构建高性能的 Web 应用。优化了系统性能，提升了 50% 的页面加载速度。",
     },
     {
-      company: "另一家公司",
+      company: "Partea",
       href: "https://another-company.com",
       badges: [],
       location: "北京",
@@ -94,12 +94,19 @@ export const DATA = {
   ],
   education: [
     {
-      school: "某知名大学",
-      href: "https://university.edu",
+      school: "MDIS",
+      href: "https://www.mdis.edu.sg/",
       degree: "计算机科学与技术 学士学位",
-      logoUrl: "/logos/university.png",
+      logoUrl: "/logos/mdis.png",
+      start: "2020",
+      end: "2021",
+    },{
+      school: "BCA Academy",
+      href: "https://www.bcaa.edu.sg/",
+      degree: "计算机科学与技术 学士学位",
+      logoUrl: "/logos/bcaa.png",
       start: "2015",
-      end: "2019",
+      end: "2018",
     },
   ],
   projects: [
