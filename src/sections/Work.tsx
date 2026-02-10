@@ -15,7 +15,7 @@ export function Work() {
       </BlurFade>
       <div className="mt-4">
         {DATA.work.map((work, index) => (
-          <BlurFade key={t((work as any).companyKey)} delay={BLUR_FADE_DELAY * 9 + index * 0.05}>
+          <BlurFade key={index} delay={BLUR_FADE_DELAY * 9 + index * 0.05}>
             <ResumeCard
               logoUrl={(work as any).logoUrl || ""}
               altText={t((work as any).companyKey)}

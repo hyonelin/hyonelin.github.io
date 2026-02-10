@@ -15,7 +15,7 @@ export function Education() {
       </BlurFade>
       <div className="mt-4">
         {DATA.education.map((edu, index) => (
-          <BlurFade key={edu.school} delay={BLUR_FADE_DELAY * 13 + index * 0.05}>
+          <BlurFade key={index} delay={BLUR_FADE_DELAY * 13 + index * 0.05}>
             <ResumeCard
               logoUrl={edu.logoUrl}
               altText={edu.school}

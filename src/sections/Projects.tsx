@@ -19,7 +19,7 @@ export function Projects() {
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
         {DATA.projects.map((project, index) => (
           <BlurFade
-            key={t((project as any).titleKey)}
+            key={index}
             delay={BLUR_FADE_DELAY * 15 + index * 0.05}
           >
             <ProjectCard
