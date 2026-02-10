@@ -59,24 +59,24 @@
       "start": "Apr 2022",
       "description": "Responsible for core product architecture and development, building high-performance web applications using React, TypeScript, and Node.js. Optimized system performance, improving page load speed by 50%."
     },
-    "dacompany": "Dalian Shengjie International Freight Forwarding Co., Ltd.",
-      "lian": {
+    "dalian": {
+      "company": "Dalian Shengjie International Freight Forwarding Co., Ltd.",
       "title": "IT Operation",
       "location": "Dalian, Liaoning",
       "start": "Sep 2021",
       "end": "Jan 2022",
       "description": "Responsible for maintaining the company's network, computers, printers, and other hardware and software to ensure the normal operation of the company's business."
     },
-    "lucompany": "Lucky Joint Construction Pte. Ltd.",
-      "ckyjoint": {
+    "luckyjoint": {
+      "company": "Lucky Joint Construction Pte. Ltd.",
       "title": "Civil officer",
       "location": "Singapore",
       "start": "Mar 2020",
       "end": "Jul 2020",
       "description": "Draw construction drawings (CAD) for telecommunications cables, including construction details and cable routing diagrams."
-    },company": "Partea",
-      "
+    },
     "partea": {
+      "company": "Partea",
       "title": "Head of IT and Marketing",
       "location": "Singapore",
       "start": "Feb 2018",

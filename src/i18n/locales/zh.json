@@ -67,16 +67,16 @@
       "end": "2022年1月",
       "description": "负责维护公司网络、电脑、打印机等软硬件，以确保公司业务正常进行。"
     },
-    "lucompany": "Lucky Joint Construction Pte. Ltd.",
-      "ckyjoint": {
+    "luckyjoint": {
+      "company": "Lucky Joint Construction Pte. Ltd.",
       "title": "Civil officer",
       "location": "新加坡",
       "start": "2020年3月",
       "end": "2020年7月",
       "description": "绘制电信线缆施工图（CAD），绘制施工细节及电缆走向图"
     },
-    "pacompany": "Partea",
-      "rtea": {
+    "partea": {
+      "company": "Partea",
       "title": "IT及市场宣传部主管",
       "location": "新加坡",
       "start": "2018年2月",

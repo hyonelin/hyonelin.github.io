@@ -12,4 +12,9 @@ export default defineConfig({
   // 对于 GitHub Pages，使用 '/' 作为 base
   // 如果部署到子路径，改为 '/repo-name/'
   base: '/',
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    minify: 'esbuild',
+  },
 })
