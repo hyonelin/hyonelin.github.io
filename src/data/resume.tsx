@@ -83,7 +83,7 @@ export const DATA = {
     },
     {
       companyKey: "workExperience.luckyjoint.company",
-      href: "www.luckyjoint.com.sg",
+      href: "https://www.luckyjoint.com.sg/",
       badges: [],
       locationKey: "workExperience.luckyjoint.location",
       titleKey: "workExperience.luckyjoint.title",
@@ -94,7 +94,7 @@ export const DATA = {
     },
     {
       companyKey: "workExperience.partea.company",
-      href: "https://another-company.com",
+      href: "",
       badges: [],
       locationKey: "workExperience.partea.location",
       titleKey: "workExperience.partea.title",
