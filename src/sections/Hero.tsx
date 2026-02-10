@@ -1,13 +1,12 @@
 import { BlurFade } from '@/components/BlurFade'
 import { Avatar } from '@/components/Avatar'
-import { DATA, getLocalizedText } from '@/data/resume'
+import { DATA } from '@/data/resume'
 import { useTranslation } from 'react-i18next'
 
 const BLUR_FADE_DELAY = 0.04
 
 export function Hero() {
-  const { t, i18n } = useTranslation()
-  const lang = i18n.language
+  const { t } = useTranslation()
 
   return (
     <section id="hero" className="mx-auto w-full max-w-2xl space-y-8">
@@ -20,7 +19,7 @@ export function Hero() {
           </BlurFade>
           <BlurFade delay={BLUR_FADE_DELAY * 2}>
             <span className="max-w-[600px] text-muted-foreground md:text-xl">
-              {getLocalizedText(DATA.description, lang)}
+              {t(DATA.descriptionKey)}
             </span>
           </BlurFade>
         </div>

@@ -45,5 +45,60 @@
   },
   "common": {
     "present": "至今"
+  },
+  "profile": {
+    "location": "上海, 中国",
+    "description": "IT 技术支持工程师 & 软件工程师",
+    "summary": "我是一名充满热情的软件工程师，专注于构建优秀的用户体验和高质量的代码。我喜欢探索新技术，解决复杂问题，并与团队合作创造有价值的产品。"
+  },
+  "workExperience": {
+    "tesla": {
+      "company": "Tesla",
+      "title": "IT 技术支持工程师",
+      "location": "上海",
+      "start": "2022年4月",
+      "description": "负责核心产品的架构设计和开发，使用 React、TypeScript 和 Node.js 构建高性能的 Web 应用。优化了系统性能，提升了 50% 的页面加载速度。"
+    },
+    "dalian": {
+      "company": "大连盛捷国际货运代理有限公司",
+      "title": "IT运维",
+      "location": "辽宁大连",
+      "start": "2021年9月",
+      "end": "2022年1月",
+      "description": "负责维护公司网络、电脑、打印机等软硬件，以确保公司业务正常进行。"
+    },
+    "lucompany": "Lucky Joint Construction Pte. Ltd.",
+      "ckyjoint": {
+      "title": "Civil officer",
+      "location": "新加坡",
+      "start": "2020年3月",
+      "end": "2020年7月",
+      "description": "绘制电信线缆施工图（CAD），绘制施工细节及电缆走向图"
+    },
+    "pacompany": "Partea",
+      "rtea": {
+      "title": "IT及市场宣传部主管",
+      "location": "新加坡",
+      "start": "2018年2月",
+      "end": "2020年3月",
+      "description": "独立调研并部署收银系统，独立使用HTML开发官网，部署公司总部基础网络服务架构（包括但不限于网络、文件存储服务器、监控摄像头等）。并负责门店巡检，主要负责检查IT系统以及运营情况。"
+    }
+  },
+  "educationInfo": {
+    "mdis": {
+      "degree": "信息技术理学士学位",
+      "start": "2020年09月",
+      "end": "2021年06月"
+    },
+    "bcaa": {
+      "degree": "建筑信息技术",
+      "start": "2015年03月",
+      "end": "2018年10月"
+    }
+  },
+  "projectInfo": {
+    "underConstruction": "施工中。。。",
+    "comingSoon": "即将为您呈现，烦请您稍后再来~",
+    "dates": "2024年1月 - 至今"
   }
 }
