@@ -9,9 +9,7 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  // 对于 GitHub Pages，使用 '/' 作为 base
-  // 如果部署到子路径，改为 '/repo-name/'
-  base: '/',
+  base: './',
   build: {
     outDir: 'dist',
     sourcemap: false,
