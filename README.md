@@ -1,4 +1,4 @@
-# Portfolio
+# resume
 
 一个极简风格的个人作品集网站，使用 React + TypeScript + TailwindCSS + Framer Motion 构建。
 
