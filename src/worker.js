@@ -2,26 +2,28 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const pathname = url.pathname;
-
+    
     try {
-      // 获取静态资源
-      const asset = await env.ASSETS.fetch(request);
+      // 先尝试获取静态资源
+      let response = await env.ASSETS.fetch(request);
       
-      // 如果资源存在，直接返回
-      if (asset.status !== 404) {
-        return asset;
+      // 如果资源找到了，直接返回
+      if (response.status !== 404) {
+        return response;
       }
 
-      // 如果是 HTML 页面或其他请求，返回 index.html（用于 SPA 路由）
-      if (!pathname.includes('.') || pathname.endsWith('.html')) {
-        const indexRequest = new Request(new URL('/', request.url), request);
-        return await env.ASSETS.fetch(indexRequest);
+      // 如果请求的是文件（有扩展名），但找不到，返回 404
+      if (pathname.includes('.')) {
+        return response; // 返回原始的 404 响应
       }
 
-      // 其他情况返回 404
-      return asset;
+      // 对于 SPA 路由，返回 index.html
+      return env.ASSETS.fetch(new Request(`${url.origin}/index.html`, request));
     } catch (error) {
-      return new Response('Internal Server Error', { status: 500 });
+      return new Response('Error: ' + error.message, { 
+        status: 500,
+        headers: { 'Content-Type': 'text/plain' }
+      });
     }
   },
 };

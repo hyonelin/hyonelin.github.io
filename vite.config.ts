@@ -9,7 +9,7 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  // 使用相对路径，兼容多种部署环境
+  // 使用相对路径
   base: './',
   build: {
     outDir: 'dist',
