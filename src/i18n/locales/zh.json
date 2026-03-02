@@ -6,6 +6,7 @@
     "education": "教育",
     "projects": "项目",
     "blog": "博客",
+    "photography": "摄影",
     "contact": "联系"
   },
   "hero": {
@@ -41,7 +42,44 @@
     "loading": "加载中...",
     "noPosts": "暂无文章",
     "notFound": "文章未找到",
-    "notFoundDesc": "抱歉，您访问的文章不存在。"
+    "notFoundDesc": "抱歉，您访问的文章不存在。",
+    "allTags": "全部"
+  },
+  "photography": {
+    "title": "摄影作品",
+    "description": "用镜头记录生活的美好瞬间",
+    "backToHome": "返回首页",
+    "loading": "加载中...",
+    "noPhotos": "暂无照片",
+    "allLocations": "所有地点",
+    "allTags": "全部",
+    "filters": "筛选",
+    "byYear": "按年份",
+    "byMonth": "按月份",
+    "contentTag": "内容",
+    "shotTag": "景别",
+    "cameraBrand": "相机品牌",
+    "locationTag": "拍摄地点",
+    "locale": "zh-CN",
+    "tags": {
+      "urbanLife": "城市人文",
+      "timelapse": "延时",
+      "nature": "自然风景",
+      "animal": "动物",
+      "humanistic": "人文",
+      "microscopy": "显微摄影",
+      "panorama": "全景",
+      "longShot": "远景",
+      "mediumShot": "中景",
+      "closeUp": "近景",
+      "extremeCloseUp": "特写",
+      "shanghaiChina": "中国上海",
+      "dalianChina": "中国大连",
+      "beijing": "北京",
+      "hangzhou": "杭州",
+      "singapore": "新加坡",
+      "other": "其他"
+    }
   },
   "common": {
     "present": "至今"

@@ -6,6 +6,7 @@
     "education": "Education",
     "projects": "Projects",
     "blog": "Blog",
+    "photography": "Photography",
     "contact": "Contact"
   },
   "hero": {
@@ -41,7 +42,44 @@
     "loading": "Loading...",
     "noPosts": "No posts yet",
     "notFound": "Post Not Found",
-    "notFoundDesc": "Sorry, the post you're looking for doesn't exist."
+    "notFoundDesc": "Sorry, the post you're looking for doesn't exist.",
+    "allTags": "All"
+  },
+  "photography": {
+    "title": "Photography",
+    "description": "Capturing beautiful moments through the lens",
+    "backToHome": "Back to Home",
+    "loading": "Loading...",
+    "noPhotos": "No photos yet",
+    "allLocations": "All Locations",
+    "allTags": "All",
+    "filters": "Filters",
+    "byYear": "By Year",
+    "byMonth": "By Month",
+    "contentTag": "Content",
+    "shotTag": "Shot Type",
+    "cameraBrand": "Camera Brand",
+    "locationTag": "Location",
+    "locale": "en-US",
+    "tags": {
+      "urbanLife": "Urban Life",
+      "timelapse": "Timelapse",
+      "nature": "Nature",
+      "animal": "Animal",
+      "humanistic": "Humanistic",
+      "microscopy": "Microscopy",
+      "panorama": "Panorama",
+      "longShot": "Long Shot",
+      "mediumShot": "Medium Shot",
+      "closeUp": "Close-up",
+      "extremeCloseUp": "Extreme Close-up",
+      "shanghaiChina": "Shanghai, China",
+      "dalianChina": "Dalian, China",
+      "beijing": "Beijing",
+      "hangzhou": "Hangzhou",
+      "singapore": "Singapore",
+      "other": "Other"
+    }
   },
   "common": {
     "present": "Present"

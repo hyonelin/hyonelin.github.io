@@ -1,5 +1,5 @@
 import { GitHubLogoIcon, LinkedInLogoIcon } from '@radix-ui/react-icons'
-import { Mail, Home, NotebookPen } from 'lucide-react'
+import { Mail, Home, NotebookPen, Camera } from 'lucide-react'
 import { WeChatIcon } from '@/components/icons/WeChatIcon'
 
 export const DATA = {
@@ -31,6 +31,7 @@ export const DATA = {
     // { href: "#projects", labelKey: "nav.projects", icon: FolderKanban },
     // { href: "#contact", labelKey: "nav.contact", icon: MessageCircle },
     { href: "/blog", labelKey: "nav.blog", icon: NotebookPen, isRoute: true },
+    { href: "/photography", labelKey: "nav.photography", icon: Camera, isRoute: true },
   ],
   contact: {
     email: "hello@example.com",

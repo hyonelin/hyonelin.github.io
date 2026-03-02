@@ -18,6 +18,7 @@ export function Blog() {
   const { t, i18n } = useTranslation()
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedTag, setSelectedTag] = useState<string>('all')
   const lang = i18n.language === 'zh' ? 'cn' : 'en'
 
   useEffect(() => {
@@ -41,6 +42,11 @@ export function Blog() {
     })
   }
 
+  const allTags = ['all', ...new Set(posts.flatMap((p) => p.tags))]
+  const filteredPosts = selectedTag === 'all' 
+    ? posts 
+    : posts.filter((p) => p.tags.includes(selectedTag))
+
   return (
     <main className="relative min-h-screen bg-background px-6 py-12 sm:py-24">
       <div className="mx-auto max-w-2xl">
@@ -59,13 +65,32 @@ export function Blog() {
           <p className="mt-2 text-muted-foreground">{t('blog.description')}</p>
         </BlurFade>
 
+        {/* Tag 筛选 */}
+        <BlurFade delay={0.12}>
+          <div className="mt-8 flex flex-wrap gap-2">
+            {allTags.map((tag) => (
+              <button
+                key={tag}
+                onClick={() => setSelectedTag(tag)}
+                className={`rounded-full px-4 py-1.5 text-sm transition-all ${
+                  selectedTag === tag
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                }`}
+              >
+                {tag === 'all' ? t('blog.allTags') : tag}
+              </button>
+            ))}
+          </div>
+        </BlurFade>
+
         <div className="mt-8 space-y-6">
           {loading ? (
             <p className="text-muted-foreground">{t('blog.loading')}</p>
-          ) : posts.length === 0 ? (
+          ) : filteredPosts.length === 0 ? (
             <p className="text-muted-foreground">{t('blog.noPosts')}</p>
           ) : (
-            posts.map((post, index) => (
+            filteredPosts.map((post, index) => (
               <BlurFade key={post.slug} delay={0.12 + index * 0.05}>
                 <Link
                   to={`/blog/${post.slug}`}
