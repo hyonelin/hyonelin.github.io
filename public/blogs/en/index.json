@@ -9,17 +9,5 @@
       "Blog"
     ],
     "cover": ""
-  },
-  {
-    "slug": "2024-12-18-getting-started-with-react",
-    "title": "Getting Started with React",
-    "date": "2024-12-18",
-    "description": "A beginner's guide to React, covering the basics and best practices.",
-    "tags": [
-      "React",
-      "Frontend",
-      "Tutorial"
-    ],
-    "cover": ""
   }
 ]
