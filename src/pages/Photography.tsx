@@ -503,7 +503,7 @@ function LazyImage({ src, alt, className, ...props }: LazyImageProps) {
       />
       {hasError && (
         <div className="absolute inset-0 flex items-center justify-center bg-muted">
-          <span className="text-sm text-muted-foreground">{t('photography.loadError')}</span>
+          <span className="text-sm text-muted-foreground">加载失败</span>
         </div>
       )}
     </div>
