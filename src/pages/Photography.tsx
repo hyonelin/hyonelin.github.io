@@ -1,182 +1,164 @@
-import { useEffect, useState } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { BlurFade } from '@/components/BlurFade'
 import { Navbar } from '@/components/Navbar'
 import { PhotoModal } from '@/components/PhotoModal'
-import { ArrowLeft, Calendar, MapPin, ChevronDown, ChevronUp } from 'lucide-react'
+import { ArrowLeft, MapPin, X, Camera, Calendar, Tag, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-
-interface PhotoMetadata {
-  filename: string
-  title?: string
-  date: string
-  location?: string
-  camera?: string
-  lens?: string
-  tags?: string[]
-  photographerNote?: string
-  settings?: {
-    iso?: string
-    aperture?: string
-    shutter?: string
-    focalLength?: string
-  }
-}
-
-interface TagCategory {
-  name: string
-  label: string
-  tags: string[]
-}
+import { getImageUrl, PHOTO_CONFIG, type PhotoMetadata, type PhotoIndex } from '@/lib/photos'
 
 export function Photography() {
   const { t } = useTranslation()
-  const [photos, setPhotos] = useState<PhotoMetadata[]>([])
+
+  // 全部图片数据
+  const [allPhotos, setAllPhotos] = useState<PhotoMetadata[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedTags, setSelectedTags] = useState<Record<string, string>>({
-    content: 'all',
-    shot: 'all',
-    camera: 'all',
-    location: 'all',
-  })
-  const [groupBy, setGroupBy] = useState<'year' | 'month'>('year')
+  const [error, setError] = useState<Error | null>(null)
+
+  // 分页状态
+  const [page, setPage] = useState(1)
+
+  // 筛选状态
+  const [selectedYear, setSelectedYear] = useState<string | null>(null)
+  const [selectedCamera, setSelectedCamera] = useState<string | null>(null)
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+
+  // UI 状态
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoMetadata | null>(null)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [activeFilterTab, setActiveFilterTab] = useState<'year' | 'camera' | 'tags'>('year')
 
+  // 无限滚动触发器
+  const loadMoreRef = useRef<HTMLDivElement>(null)
+
+  // 加载图片数据
   useEffect(() => {
-    // 加载照片元数据
-    fetch('/shots/index.json')
-      .then((res) => res.json())
-      .then((data: PhotoMetadata[]) => {
-        const sorted = [...data].sort(
+    setLoading(true)
+    fetch('/photos/index.json')
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to load photos')
+        return res.json()
+      })
+      .then((data: PhotoIndex) => {
+        const sorted = [...data.photos].sort(
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         )
-        setPhotos(sorted)
+        setAllPhotos(sorted)
         setLoading(false)
       })
-      .catch(() => {
-        setPhotos([])
+      .catch((err) => {
+        setError(err)
         setLoading(false)
       })
   }, [])
 
-  // 定义 tag 分类
-  const tagCategories: TagCategory[] = [
-    {
-      name: 'content',
-      label: t('photography.contentTag'),
-      tags: [
-        'all', 
-        t('photography.tags.urbanLife'),
-        t('photography.tags.timelapse'),
-        t('photography.tags.nature'),
-        t('photography.tags.animal'),
-        t('photography.tags.humanistic'),
-        t('photography.tags.microscopy')
-      ],
-    },
-    {
-      name: 'shot',
-      label: t('photography.shotTag'),
-      tags: [
-        'all', 
-        t('photography.tags.panorama'),
-        t('photography.tags.longShot'),
-        t('photography.tags.mediumShot'),
-        t('photography.tags.closeUp'),
-        t('photography.tags.extremeCloseUp')
-      ],
-    },
-    {
-      name: 'camera',
-      label: t('photography.cameraBrand'),
-      tags: [
-        'all', 
-        'Nikon', 
-        'Apple', 
-        'Sony', 
-        'Canon',
-        'Fujifilm', 
-        'Panasonic'
-      ],
-    },
-    {
-      name: 'location',
-      label: t('photography.locationTag'),
-      tags: [
-        'all', 
-        t('photography.tags.shanghaiChina'),
-        t('photography.tags.dalianChina'),
-        t('photography.tags.singapore'),
-        t('photography.tags.other')
-      ],
-    },
-  ]
+  // 可用筛选选项
+  const availableYears = useMemo(() => {
+    const years = new Set<string>()
+    allPhotos.forEach((photo) => {
+      years.add(new Date(photo.date).getFullYear().toString())
+    })
+    return Array.from(years).sort((a, b) => parseInt(b) - parseInt(a))
+  }, [allPhotos])
 
-  // Tag 翻译映射（用于匹配数据）
-  const tagMapping: Record<string, string> = {
-    [t('photography.tags.urbanLife')]: '城市人文',
-    [t('photography.tags.timelapse')]: '延时',
-    [t('photography.tags.nature')]: '自然风景',
-    [t('photography.tags.animal')]: '动物',
-    [t('photography.tags.humanistic')]: '人文',
-    [t('photography.tags.microscopy')]: '显微摄影',
-    [t('photography.tags.panorama')]: '全景',
-    [t('photography.tags.longShot')]: '远景',
-    [t('photography.tags.mediumShot')]: '中景',
-    [t('photography.tags.closeUp')]: '近景',
-    [t('photography.tags.extremeCloseUp')]: '特写',
-    [t('photography.tags.shanghaiChina')]: '中国上海',
-    [t('photography.tags.dalianChina')]: '中国大连',
-    [t('photography.tags.beijing')]: '北京',
-    [t('photography.tags.hangzhou')]: '杭州',
-    [t('photography.tags.singapore')]: '新加坡',
-    [t('photography.tags.other')]: '其他',
-  }
+  const availableCameras = useMemo(() => {
+    const cameras = new Set<string>()
+    allPhotos.forEach((photo) => {
+      if (photo.camera) cameras.add(photo.camera)
+    })
+    return Array.from(cameras).sort()
+  }, [allPhotos])
 
-  const filteredPhotos = photos.filter((photo) => {
-    // 获取原始中文 tag（用于匹配数据）
-    const getOriginalTag = (displayTag: string) => {
-      return tagMapping[displayTag] || displayTag
+  const availableTags = useMemo(() => {
+    const tags = new Set<string>()
+    allPhotos.forEach((photo) => {
+      photo.tags?.forEach((tag) => tags.add(tag))
+    })
+    return Array.from(tags).sort()
+  }, [allPhotos])
+
+  // 筛选后的图片
+  const filteredPhotos = useMemo(() => {
+    return allPhotos.filter((photo) => {
+      // 年份筛选
+      if (selectedYear) {
+        const photoYear = new Date(photo.date).getFullYear().toString()
+        if (photoYear !== selectedYear) return false
+      }
+
+      // 相机筛选
+      if (selectedCamera && !photo.camera?.includes(selectedCamera)) {
+        return false
+      }
+
+      // 标签筛选
+      if (selectedTags.length > 0) {
+        const hasTag = selectedTags.some((tag) => photo.tags?.includes(tag))
+        if (!hasTag) return false
+      }
+
+      return true
+    })
+  }, [allPhotos, selectedYear, selectedCamera, selectedTags])
+
+  // 分页后的图片
+  const paginatedPhotos = useMemo(() => {
+    const endIndex = page * PHOTO_CONFIG.PAGE_SIZE
+    return filteredPhotos.slice(0, endIndex)
+  }, [filteredPhotos, page])
+
+  // 总页数和是否还有更多
+  const totalPages = Math.ceil(filteredPhotos.length / PHOTO_CONFIG.PAGE_SIZE)
+  const hasNextPage = page < totalPages
+  const totalCount = filteredPhotos.length
+
+  // 加载更多
+  const loadMore = useCallback(() => {
+    if (hasNextPage && !loading) {
+      setPage((prev) => prev + 1)
+    }
+  }, [hasNextPage, loading])
+
+  // 无限滚动
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && hasNextPage && !loading) {
+          loadMore()
+        }
+      },
+      { rootMargin: '400px' }
+    )
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current)
     }
 
-    // 检查每个分类的 tag
-    const matchContent = selectedTags.content === 'all' || 
-      (photo.tags && photo.tags.includes(getOriginalTag(selectedTags.content)))
-    
-    const matchShot = selectedTags.shot === 'all' || 
-      (photo.tags && photo.tags.includes(getOriginalTag(selectedTags.shot)))
-    
-    // 相机品牌筛选：检查 camera 字段或 tags 数组
-    const matchCamera = selectedTags.camera === 'all' || 
-      (photo.camera && photo.camera.includes(selectedTags.camera)) ||
-      (photo.tags && photo.tags.includes(selectedTags.camera))
-    
-    const matchLocationTag = selectedTags.location === 'all' || 
-      (photo.tags && photo.tags.includes(getOriginalTag(selectedTags.location)))
-    
-    return matchContent && matchShot && matchCamera && matchLocationTag
-  })
+    return () => observer.disconnect()
+  }, [hasNextPage, loading, loadMore])
 
-  const groupedPhotos = filteredPhotos.reduce((acc, photo) => {
-    const date = new Date(photo.date)
-    const key = groupBy === 'year' 
-      ? date.getFullYear().toString()
-      : `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-    
-    if (!acc[key]) acc[key] = []
-    acc[key].push(photo)
-    return acc
-  }, {} as Record<string, PhotoMetadata[]>)
+  // 重置页码（当筛选条件改变时）
+  useEffect(() => {
+    setPage(1)
+  }, [selectedYear, selectedCamera, selectedTags])
 
-  const formatGroupTitle = (key: string) => {
-    if (groupBy === 'year') return key
-    const [year, month] = key.split('-')
-    return new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString(
-      t('photography.locale'),
-      { year: 'numeric', month: 'long' }
-    )
+  // 清除所有筛选
+  const clearAllFilters = () => {
+    setSelectedYear(null)
+    setSelectedCamera(null)
+    setSelectedTags([])
   }
+
+  // 切换标签
+  const toggleTag = (tag: string) => {
+    if (selectedTags.includes(tag)) {
+      setSelectedTags(selectedTags.filter((t) => t !== tag))
+    } else {
+      setSelectedTags([...selectedTags, tag])
+    }
+  }
+
+  const hasFilters = selectedYear || selectedCamera || selectedTags.length > 0
 
   return (
     <main className="relative min-h-screen bg-background px-6 py-12 sm:py-24">
@@ -196,72 +178,193 @@ export function Photography() {
           <p className="mt-2 text-muted-foreground">{t('photography.description')}</p>
         </BlurFade>
 
-        {/* 筛选和分组控制 */}
+        {/* 筛选器 */}
         <BlurFade delay={0.12}>
           <div className="mt-8 space-y-4">
-            {/* 筛选按钮 */}
+            {/* 筛选按钮和统计 */}
             <div className="flex items-center justify-between">
-              <button
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className="flex items-center gap-2 rounded-lg border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
-              >
-                <span>{t('photography.filters')}</span>
-                {isFilterOpen ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </button>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setIsFilterOpen(!isFilterOpen)}
+                  className="flex items-center gap-2 rounded-lg border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
+                >
+                  <Tag className="h-4 w-4" />
+                  <span>{t('photography.filters')}</span>
+                  {hasFilters && (
+                    <span className="rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
+                      {(selectedYear ? 1 : 0) + (selectedCamera ? 1 : 0) + selectedTags.length}
+                    </span>
+                  )}
+                </button>
 
-              {/* 时间分组 */}
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <button
-                  onClick={() => setGroupBy('year')}
-                  className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-                    groupBy === 'year' ? 'bg-primary text-primary-foreground' : 'bg-card'
-                  }`}
-                >
-                  {t('photography.byYear')}
-                </button>
-                <button
-                  onClick={() => setGroupBy('month')}
-                  className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-                    groupBy === 'month' ? 'bg-primary text-primary-foreground' : 'bg-card'
-                  }`}
-                >
-                  {t('photography.byMonth')}
-                </button>
+                <span className="text-sm text-muted-foreground">
+                  {totalCount} {t('photography.photos')}
+                </span>
               </div>
+
+              {hasFilters && (
+                <button
+                  onClick={clearAllFilters}
+                  className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                >
+                  <X className="h-3 w-3" />
+                  {t('photography.clearAll')}
+                </button>
+              )}
             </div>
 
-            {/* Tag 分类筛选 - 可折叠 */}
+            {/* 当前筛选条件 */}
+            {hasFilters && (
+              <div className="flex flex-wrap gap-2">
+                {selectedYear && (
+                  <div className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm">
+                    <Calendar className="h-3 w-3" />
+                    <span>{selectedYear}</span>
+                    <button onClick={() => setSelectedYear(null)} className="ml-1 rounded-full p-0.5 hover:bg-primary/20">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
+                {selectedCamera && (
+                  <div className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm">
+                    <Camera className="h-3 w-3" />
+                    <span>{selectedCamera}</span>
+                    <button onClick={() => setSelectedCamera(null)} className="ml-1 rounded-full p-0.5 hover:bg-primary/20">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
+                {selectedTags.map((tag) => (
+                  <div key={tag} className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm">
+                    <Tag className="h-3 w-3" />
+                    <span>{tag}</span>
+                    <button onClick={() => toggleTag(tag)} className="ml-1 rounded-full p-0.5 hover:bg-primary/20">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* 筛选面板 */}
             {isFilterOpen && (
-              <div className="space-y-4 rounded-lg border bg-card p-4">
-                {tagCategories.map((category) => (
-                  <div key={category.name} className="space-y-2">
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                      {category.label}
-                    </h3>
+              <div className="rounded-lg border bg-card">
+                {/* 标签页 */}
+                <div className="flex border-b">
+                  <button
+                    onClick={() => setActiveFilterTab('year')}
+                    className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+                      activeFilterTab === 'year'
+                        ? 'border-b-2 border-primary text-primary'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <Calendar className="h-4 w-4" />
+                    {t('photography.year')} ({availableYears.length})
+                  </button>
+                  <button
+                    onClick={() => setActiveFilterTab('camera')}
+                    className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+                      activeFilterTab === 'camera'
+                        ? 'border-b-2 border-primary text-primary'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <Camera className="h-4 w-4" />
+                    {t('photography.camera')} ({availableCameras.length})
+                  </button>
+                  <button
+                    onClick={() => setActiveFilterTab('tags')}
+                    className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+                      activeFilterTab === 'tags'
+                        ? 'border-b-2 border-primary text-primary'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <Tag className="h-4 w-4" />
+                    {t('photography.tags')} ({availableTags.length})
+                  </button>
+                </div>
+
+                {/* 筛选内容 */}
+                <div className="max-h-64 overflow-y-auto p-4">
+                  {/* 年份筛选 */}
+                  {activeFilterTab === 'year' && (
                     <div className="flex flex-wrap gap-2">
-                      {category.tags.map((tag) => (
+                      <button
+                        onClick={() => setSelectedYear(null)}
+                        className={`rounded-full px-4 py-1.5 text-sm transition-all ${
+                          !selectedYear
+                            ? 'bg-primary text-primary-foreground shadow-sm'
+                            : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                        }`}
+                      >
+                        {t('photography.allYears')}
+                      </button>
+                      {availableYears.map((year) => (
                         <button
-                          key={tag}
-                          onClick={() =>
-                            setSelectedTags((prev) => ({ ...prev, [category.name]: tag }))
-                          }
+                          key={year}
+                          onClick={() => setSelectedYear(year)}
                           className={`rounded-full px-4 py-1.5 text-sm transition-all ${
-                            selectedTags[category.name] === tag
+                            selectedYear === year
                               ? 'bg-primary text-primary-foreground shadow-sm'
                               : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
                           }`}
                         >
-                          {tag === 'all' ? t('photography.allTags') : tag}
+                          {year}
                         </button>
                       ))}
                     </div>
-                  </div>
-                ))}
+                  )}
+
+                  {/* 相机筛选 */}
+                  {activeFilterTab === 'camera' && (
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => setSelectedCamera(null)}
+                        className={`rounded-full px-4 py-1.5 text-sm transition-all ${
+                          !selectedCamera
+                            ? 'bg-primary text-primary-foreground shadow-sm'
+                            : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                        }`}
+                      >
+                        {t('photography.allCameras')}
+                      </button>
+                      {availableCameras.map((camera) => (
+                        <button
+                          key={camera}
+                          onClick={() => setSelectedCamera(camera)}
+                          className={`rounded-full px-4 py-1.5 text-sm transition-all ${
+                            selectedCamera === camera
+                              ? 'bg-primary text-primary-foreground shadow-sm'
+                              : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                          }`}
+                        >
+                          {camera}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* 标签筛选 */}
+                  {activeFilterTab === 'tags' && (
+                    <div className="flex flex-wrap gap-2">
+                      {availableTags.map((tag) => (
+                        <button
+                          key={tag}
+                          onClick={() => toggleTag(tag)}
+                          className={`rounded-full px-4 py-1.5 text-sm transition-all ${
+                            selectedTags.includes(tag)
+                              ? 'bg-primary text-primary-foreground shadow-sm'
+                              : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                          }`}
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -269,60 +372,140 @@ export function Photography() {
 
         {/* 照片展示 */}
         <div className="mt-12">
-          {loading ? (
-            <p className="text-muted-foreground">{t('photography.loading')}</p>
-          ) : filteredPhotos.length === 0 ? (
-            <p className="text-muted-foreground">{t('photography.noPhotos')}</p>
+          {loading && paginatedPhotos.length === 0 ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>{t('photography.loading')}</span>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="py-12 text-center text-muted-foreground">
+              {t('photography.loadError')}
+            </div>
+          ) : paginatedPhotos.length === 0 ? (
+            <div className="py-12 text-center text-muted-foreground">
+              {t('photography.noPhotos')}
+            </div>
           ) : (
-            Object.entries(groupedPhotos).map(([group, groupPhotos], groupIndex) => (
-              <div key={group} className="mb-16">
-                <BlurFade delay={0.16 + groupIndex * 0.05}>
-                  <h2 className="mb-6 text-2xl font-semibold">{formatGroupTitle(group)}</h2>
-                </BlurFade>
-                
-                {/* 瀑布流布局 */}
-                <div className="columns-1 gap-4 sm:columns-2 lg:columns-3 xl:columns-4">
-                  {groupPhotos.map((photo, photoIndex) => (
-                    <BlurFade 
-                      key={photo.filename} 
-                      delay={0.2 + groupIndex * 0.05 + photoIndex * 0.02}
+            /* 瀑布流布局 */
+            <div className="columns-1 gap-4 sm:columns-2 lg:columns-3 xl:columns-4">
+              {paginatedPhotos.map((photo, index) => (
+                <BlurFade key={photo.path} delay={0.1 + index * 0.02}>
+                  <div className="mb-4 break-inside-avoid">
+                    <div
+                      className="group relative cursor-pointer overflow-hidden rounded-lg border bg-card transition-all hover:shadow-lg"
+                      onClick={() => setSelectedPhoto(photo)}
                     >
-                      <div className="mb-4 break-inside-avoid">
-                        <div 
-                          className="group relative cursor-pointer overflow-hidden rounded-lg border bg-card transition-all hover:shadow-lg"
-                          onClick={() => setSelectedPhoto(photo)}
-                        >
-                          <img
-                            src={`/shots/${photo.filename}`}
-                            alt={photo.title || photo.filename}
-                            className="w-full transition-transform duration-300 group-hover:scale-105"
-                            loading="lazy"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity group-hover:opacity-100">
-                            <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                              {photo.title && (
-                                <h3 className="text-sm font-semibold">{photo.title}</h3>
-                              )}
-                              {photo.location && (
-                                <div className="mt-1 flex items-center gap-1 text-xs">
-                                  <MapPin className="h-3 w-3" />
-                                  {photo.location}
-                                </div>
-                              )}
+                      <LazyImage
+                        src={getImageUrl(photo.path)}
+                        alt={photo.title || photo.path}
+                        className="w-full transition-transform duration-300 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity group-hover:opacity-100">
+                        <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                          {photo.title && (
+                            <h3 className="text-sm font-semibold">{photo.title}</h3>
+                          )}
+                          {photo.location && (
+                            <div className="mt-1 flex items-center gap-1 text-xs">
+                              <MapPin className="h-3 w-3" />
+                              {photo.location}
                             </div>
-                          </div>
+                          )}
                         </div>
                       </div>
-                    </BlurFade>
-                  ))}
+                    </div>
+                  </div>
+                </BlurFade>
+              ))}
+            </div>
+          )}
+
+          {/* 加载更多触发器 */}
+          {hasNextPage && (
+            <div ref={loadMoreRef} className="flex justify-center py-8">
+              {loading && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>{t('photography.loadingMore')}</span>
                 </div>
-              </div>
-            ))
+              )}
+            </div>
+          )}
+
+          {/* 没有更多了 */}
+          {!hasNextPage && paginatedPhotos.length > 0 && (
+            <div className="py-8 text-center text-sm text-muted-foreground">
+              {t('photography.noMorePhotos')}
+            </div>
           )}
         </div>
       </div>
+
       <PhotoModal photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
       <Navbar />
     </main>
+  )
+}
+
+// 懒加载图片组件
+interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+  src: string
+}
+
+function LazyImage({ src, alt, className, ...props }: LazyImageProps) {
+  const [isLoaded, setIsLoaded] = useState(false)
+  const [isInView, setIsInView] = useState(false)
+  const [hasError, setHasError] = useState(false)
+  const imgRef = useRef<HTMLImageElement>(null)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: '200px' }
+    )
+
+    if (imgRef.current) {
+      observer.observe(imgRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <div className="relative">
+      {!isLoaded && (
+        <div
+          className="absolute inset-0 animate-pulse bg-muted"
+          style={{ minHeight: '200px' }}
+        />
+      )}
+      <img
+        ref={imgRef}
+        src={isInView ? src : undefined}
+        alt={alt}
+        className={`${className || ''} transition-opacity duration-300 ${
+          isLoaded ? 'opacity-100' : 'opacity-0'
+        }`}
+        loading="lazy"
+        onLoad={() => setIsLoaded(true)}
+        onError={() => {
+          setHasError(true)
+          setIsLoaded(true)
+        }}
+        {...props}
+      />
+      {hasError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-muted">
+          <span className="text-sm text-muted-foreground">{t('photography.loadError')}</span>
+        </div>
+      )}
+    </div>
   )
 }

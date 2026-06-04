@@ -63,3 +63,27 @@ pnpm preview
 - Framer Motion
 - Vite
 - Lucide Icons
+- Cloudflare R2 (图片存储)
+
+## 图片存储
+
+图片托管在 Cloudflare R2，支持：
+- 懒加载
+- 无限滚动分页
+- 按年份/相机/标签筛选
+- 支持 10000+ 照片
+
+详见 [R2 迁移指南](docs/R2-MIGRATION.md)
+
+## 迁移脚本
+
+```bash
+# 上传图片到 R2
+npm run migrate:r2
+
+# 转换 index.json 格式
+npm run migrate:index
+
+# 清理本地图片（迁移后）
+npm run clean:images
+```

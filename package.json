@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "migrate:index": "node scripts/migrate-index.ts",
+    "migrate:r2": "bash scripts/migrate-to-r2.sh",
+    "clean:images": "bash scripts/clean-local-images.sh"
   },
   "dependencies": {
     "@radix-ui/react-icons": "^1.3.2",

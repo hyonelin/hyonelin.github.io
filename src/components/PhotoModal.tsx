@@ -1,26 +1,10 @@
 import { X, Camera, MapPin, Calendar, Aperture } from 'lucide-react'
 import { useEffect } from 'react'
 import { Badge } from './Badge'
-
-interface PhotoMetadata {
-  filename: string
-  title?: string
-  date: string
-  location?: string
-  camera?: string
-  lens?: string
-  tags?: string[]
-  photographerNote?: string
-  settings?: {
-    iso?: string
-    aperture?: string
-    shutter?: string
-    focalLength?: string
-  }
-}
+import { getImageUrl, type PhotoMetadata } from '@/lib/photos'
 
 interface PhotoModalProps {
-  photo: PhotoMetadata | null
+  photo: (PhotoMetadata & { path: string }) | null
   onClose: () => void
 }
 
@@ -74,8 +58,8 @@ export function PhotoModal({ photo, onClose }: PhotoModalProps) {
         {/* 左侧：图片展示 */}
         <div className="flex flex-1 items-center justify-center bg-muted p-8">
           <img
-            src={`/shots/${photo.filename}`}
-            alt={photo.title || photo.filename}
+            src={getImageUrl(photo.path)}
+            alt={photo.title || photo.path}
             className="max-h-full max-w-full object-contain"
           />
         </div>
