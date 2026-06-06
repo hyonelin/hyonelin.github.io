@@ -1,9 +1,6 @@
-import { BlurFade } from '@/components/BlurFade'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Briefcase, GraduationCap, Award, FileText } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-
-const BLUR_FADE_DELAY = 0.04
 
 interface HighlightItem {
   icon: React.ReactNode

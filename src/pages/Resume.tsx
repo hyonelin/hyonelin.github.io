@@ -9,7 +9,6 @@ import { Contact } from '@/sections/Contact'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Download } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { BlurFade } from '@/components/BlurFade'
 
 export function Resume() {
   const { t } = useTranslation()
