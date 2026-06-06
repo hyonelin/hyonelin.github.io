@@ -224,7 +224,9 @@ export function Admin() {
 
       if (tags.ApertureValue || tags.FNumber) {
         const aperture = tags.ApertureValue || tags.FNumber
-        settings.aperture = aperture.description?.toString() || ''
+        if (aperture) {
+          settings.aperture = aperture.description?.toString() || ''
+        }
       }
 
       if (tags.ExposureTime) {
