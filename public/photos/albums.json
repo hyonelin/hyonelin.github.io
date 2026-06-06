@@ -1,0 +1,107 @@
+{
+  "albums": [
+    {
+      "id": "2026-06-06-riding",
+      "title": "骑行之旅",
+      "description": "阳光明媚的一天，记录骑行的美好时光",
+      "coverImage": "shots/IMG_0480.JPEG",
+      "date": "2026-06-06",
+      "location": "上海",
+      "tags": ["骑行", "户外", "运动"],
+      "published": true,
+      "photos": [
+        {
+          "path": "shots/IMG_0480.JPEG",
+          "title": "出发",
+          "date": "2026-06-06",
+          "camera": "iPhone 15 Pro",
+          "tags": ["骑行", "出发"]
+        },
+        {
+          "path": "shots/IMG_0486.JPEG",
+          "title": "沿途风景",
+          "date": "2026-06-06",
+          "camera": "iPhone 15 Pro",
+          "tags": ["骑行", "风景"]
+        }
+      ]
+    },
+    {
+      "id": "2021-05-singapore",
+      "title": "新加坡印象",
+      "description": "漫步狮城，感受这座城市的独特魅力",
+      "coverImage": "shots/DSC_0081.JPEG",
+      "date": "2021-05-10",
+      "location": "Singapore",
+      "tags": ["新加坡", "旅行", "城市"],
+      "published": true,
+      "photos": [
+        {
+          "path": "shots/DSC_0058_Original.JPEG",
+          "title": "清晨",
+          "date": "2021-05-09",
+          "location": "Singapore",
+          "camera": "NIKON D3400",
+          "tags": ["新加坡", "自然风景"]
+        },
+        {
+          "path": "shots/DSC_0081.JPEG",
+          "title": "城市一角",
+          "date": "2021-05-10",
+          "location": "Singapore",
+          "camera": "NIKON D3400",
+          "tags": ["新加坡", "城市"]
+        },
+        {
+          "path": "shots/IMG_5240_Original.JPEG",
+          "title": "街道",
+          "date": "2021-05-15",
+          "location": "Singapore",
+          "camera": "iPhone 12 Pro",
+          "tags": ["新加坡", "街道"]
+        },
+        {
+          "path": "shots/IMG_5285_Original.JPEG",
+          "title": "黄昏",
+          "date": "2021-05-15",
+          "location": "Singapore",
+          "camera": "iPhone 12 Pro",
+          "tags": ["新加坡", "黄昏"]
+        }
+      ]
+    },
+    {
+      "id": "2024-01-dalian",
+      "title": "大连冬日",
+      "description": "冬日的大连，海风凛冽却别有风味",
+      "coverImage": "shots/IMG_0480.JPEG",
+      "date": "2024-01-01",
+      "location": "Dalian",
+      "tags": ["大连", "冬天", "海边"],
+      "published": true,
+      "photos": [
+        {
+          "path": "shots/IMG_0480.JPEG",
+          "title": "海边",
+          "date": "2024-01-01",
+          "location": "Dalian",
+          "camera": "iPhone X",
+          "tags": ["大连", "海边"]
+        },
+        {
+          "path": "shots/IMG_0486.JPEG",
+          "title": "港口",
+          "date": "2024-01-01",
+          "location": "Dalian",
+          "camera": "iPhone X",
+          "tags": ["大连", "港口"]
+        }
+      ]
+    }
+  ],
+  "meta": {
+    "totalCount": 3,
+    "lastUpdated": "2026-06-06T00:00:00.000Z",
+    "version": "1.0.0"
+  }
+}

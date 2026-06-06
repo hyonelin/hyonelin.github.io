@@ -45,10 +45,29 @@
     "notFoundDesc": "Sorry, the post you're looking for doesn't exist.",
     "allTags": "All"
   },
+  "resume": {
+    "title": "Resume",
+    "backToHome": "Back to Home",
+    "download": "Download PDF",
+    "printVersion": "Print Version"
+  },
+  "resumePreview": {
+    "title": "Resume Preview",
+    "subtitle": "View complete professional resume suitable for recruiters and partners",
+    "experience": "Experience",
+    "projects": "Projects",
+    "education": "Education",
+    "skills": "Skills",
+    "latestExperience": "Latest Experience",
+    "experienceDescription": "Responsible for core product architecture and development, building high-performance web applications using React, TypeScript, and Node.js",
+    "viewFullResume": "View Full Resume",
+    "openInNewTab": "Open in New Tab"
+  },
   "photography": {
     "title": "Photography",
     "description": "Capturing beautiful moments through the lens",
     "backToHome": "Back to Home",
+    "backToPhotography": "Back to Photography",
     "loading": "Loading...",
     "loadingMore": "Loading more...",
     "noPhotos": "No photos yet",
@@ -65,6 +84,10 @@
     "year": "Year",
     "camera": "Camera",
     "tags": "Tags",
+    "albums": "Albums",
+    "noAlbums": "No albums yet",
+    "albumNotFound": "Album Not Found",
+    "albumNotFoundDesc": "Sorry, the album you're looking for doesn't exist.",
     "photos": "photos",
     "contentTag": "Content",
     "shotTag": "Shot Type",

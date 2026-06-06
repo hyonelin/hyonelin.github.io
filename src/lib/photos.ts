@@ -49,6 +49,8 @@ export interface PhotoMetadata {
   // 图片尺寸（可选，用于布局优化）
   width?: number
   height?: number
+  // 项目 ID（可选，用于项目相册）
+  projectId?: string
 }
 
 /**
@@ -68,5 +70,41 @@ export interface PhotoIndex {
     year: Record<string, string[]> // 年份 -> 图片路径列表
     camera: Record<string, string[]> // 相机 -> 图片路径列表
     tags: Record<string, string[]> // 标签 -> 图片路径列表
+  }
+}
+
+/**
+ * 项目相册接口
+ */
+export interface PhotoAlbum {
+  // 项目 ID（用于 URL）
+  id: string
+  // 项目名称
+  title: string
+  // 项目描述
+  description?: string
+  // 封面图片路径
+  coverImage?: string
+  // 拍摄日期
+  date: string
+  // 拍摄地点
+  location?: string
+  // 项目标签
+  tags?: string[]
+  // 图片列表
+  photos: PhotoMetadata[]
+  // 是否公开
+  published?: boolean
+}
+
+/**
+ * 项目相册索引接口
+ */
+export interface AlbumIndex {
+  albums: PhotoAlbum[]
+  meta: {
+    totalCount: number
+    lastUpdated: string
+    version: string
   }
 }

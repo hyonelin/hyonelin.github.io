@@ -72,9 +72,9 @@ export function ProjectCard({
         {/* Links */}
         {links && links.length > 0 && (
           <div className="mt-3 flex gap-2">
-            {links.map((link) => (
+            {links.map((link, index) => (
               <a
-                key={link.href}
+                key={`${link.href}-${index}`}
                 href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"

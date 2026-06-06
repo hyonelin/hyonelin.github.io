@@ -2,8 +2,6 @@ import { Navbar } from '@/components/Navbar'
 import { Hero } from '@/sections/Hero'
 import { About } from '@/sections/About'
 import { Skills } from '@/sections/Skills'
-import { Work } from '@/sections/Work'
-import { Education } from '@/sections/Education'
 import { Projects } from '@/sections/Projects'
 import { Contact } from '@/sections/Contact'
 
@@ -14,8 +12,6 @@ export function Home() {
         <Hero />
         <About />
         <Skills />
-        <Work />
-        <Education />
         <Projects />
         <Contact />
       </div>

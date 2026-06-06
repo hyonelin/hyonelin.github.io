@@ -1,0 +1,8 @@
+# Worker 环境变量配置
+# 复制此文件为 .dev.vars 并填入实际值
+
+# 管理密码（自己设置一个密码）
+ADMIN_PASSWORD=your-admin-password
+
+# R2 公开访问 URL
+R2_BASE_URL=https://pub-e00c2328da0440458b54fe471887ca39.r2.dev

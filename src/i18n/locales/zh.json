@@ -7,6 +7,7 @@
     "projects": "项目",
     "blog": "博客",
     "photography": "摄影",
+    "resume": "简历",
     "contact": "联系"
   },
   "hero": {
@@ -45,10 +46,29 @@
     "notFoundDesc": "抱歉，您访问的文章不存在。",
     "allTags": "全部"
   },
+  "resume": {
+    "title": "简历",
+    "backToHome": "返回首页",
+    "download": "下载 PDF",
+    "printVersion": "打印版本"
+  },
+  "resumePreview": {
+    "title": "简历预览",
+    "subtitle": "查看完整的专业简历，适合招聘人员和合作方",
+    "experience": "工作经验",
+    "projects": "项目经验",
+    "education": "教育背景",
+    "skills": "技能亮点",
+    "latestExperience": "最新工作经历",
+    "experienceDescription": "负责核心产品的架构设计和开发，使用 React、TypeScript 和 Node.js 构建高性能的 Web 应用",
+    "viewFullResume": "查看完整简历",
+    "openInNewTab": "新标签页打开"
+  },
   "photography": {
     "title": "摄影作品",
     "description": "用镜头记录生活的美好瞬间",
     "backToHome": "返回首页",
+    "backToPhotography": "返回摄影",
     "loading": "加载中...",
     "loadingMore": "加载更多...",
     "noPhotos": "暂无照片",
@@ -65,6 +85,10 @@
     "year": "年份",
     "camera": "相机",
     "tags": "标签",
+    "albums": "项目相册",
+    "noAlbums": "暂无项目相册",
+    "albumNotFound": "相册未找到",
+    "albumNotFoundDesc": "抱歉，您访问的相册不存在。",
     "photos": "张照片",
     "contentTag": "内容",
     "shotTag": "景别",
