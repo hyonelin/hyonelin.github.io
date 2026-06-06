@@ -1,11 +1,25 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
+
+// Turnstile 回调函数（全局声明）
+declare global {
+  interface Window {
+    turnstile?: {
+      reset: () => void
+    }
+    onTurnstileSuccess?: (token: string) => void
+    onTurnstileExpired?: () => void
+  }
+}
 import { Link } from 'react-router-dom'
 import { Navbar } from '@/components/Navbar'
-import { ArrowLeft, Upload, Loader2, Plus, X, FolderOpen, Calendar, Check, AlertCircle, Settings } from 'lucide-react'
+import { ArrowLeft, Upload, Loader2, Plus, X, FolderOpen, Calendar, Check, AlertCircle, Settings, Shield } from 'lucide-react'
 import ExifReader from 'exifreader'
 
 // Worker API URL
 const WORKER_URL = 'https://photo-admin.hyonelin.workers.dev'
+
+// Turnstile Site Key
+const TURNSTILE_SITE_KEY = '0x4AAAAAADfykz_TUNYFStnF'
 
 // 照片元数据接口
 interface PhotoMetadata {
@@ -58,6 +72,72 @@ export function Admin() {
   const [authLoading, setAuthLoading] = useState(false)
   const [authError, setAuthError] = useState('')
 
+  // 限流状态
+  const [rateLimitInfo, setRateLimitInfo] = useState<{
+    attempts: number
+    requireTurnstile: boolean
+    isLocked: boolean
+    lockedUntil: number | null
+    delay: number
+  }>({
+    attempts: 0,
+    requireTurnstile: false,
+    isLocked: false,
+    lockedUntil: null,
+    delay: 0,
+  })
+
+  // Turnstile 状态
+  const [turnstileToken, setTurnstileToken] = useState<string>('')
+  const [turnstileLoaded, setTurnstileLoaded] = useState(false)
+
+  // 加载 Turnstile 脚本
+  useEffect(() => {
+    if (rateLimitInfo.requireTurnstile && !turnstileLoaded) {
+      const script = document.createElement('script')
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js'
+      script.async = true
+      script.defer = true
+      document.head.appendChild(script)
+      script.onload = () => setTurnstileLoaded(true)
+      return () => {
+        document.head.removeChild(script)
+      }
+    }
+  }, [rateLimitInfo.requireTurnstile, turnstileLoaded])
+
+  // 获取限流状态
+  const fetchRateLimitInfo = async () => {
+    try {
+      const response = await fetch(`${WORKER_URL}/api/rate-limit`)
+      const data = await response.json()
+      setRateLimitInfo(data)
+    } catch (err) {
+      console.error('Failed to fetch rate limit info:', err)
+    }
+  }
+
+  // 初始加载时获取限流状态
+  useEffect(() => {
+    if (!isAuthenticated) {
+      fetchRateLimitInfo()
+    }
+  }, [isAuthenticated])
+
+  // Turnstile 回调函数
+  useEffect(() => {
+    window.onTurnstileSuccess = (token: string) => {
+      setTurnstileToken(token)
+    }
+    window.onTurnstileExpired = () => {
+      setTurnstileToken('')
+    }
+    return () => {
+      delete window.onTurnstileSuccess
+      delete window.onTurnstileExpired
+    }
+  }, [])
+
   // 上传模式
   const [uploadMode, setUploadMode] = useState<'year' | 'album'>('year')
 
@@ -99,6 +179,19 @@ export function Admin() {
 
   // 验证密码
   const handleVerify = async () => {
+    // 检查是否锁定
+    if (rateLimitInfo.isLocked) {
+      const remaining = rateLimitInfo.lockedUntil ? Math.ceil((rateLimitInfo.lockedUntil - Date.now()) / 1000) : 0
+      setAuthError(`账户已锁定，请 ${remaining} 秒后重试`)
+      return
+    }
+
+    // 检查是否需要 Turnstile 但未完成验证
+    if (rateLimitInfo.requireTurnstile && !turnstileToken) {
+      setAuthError('请完成人机验证')
+      return
+    }
+
     setAuthLoading(true)
     setAuthError('')
 
@@ -106,8 +199,12 @@ export function Admin() {
       const response = await fetch(`${WORKER_URL}/api/verify`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${password}`,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          password,
+          turnstileToken: rateLimitInfo.requireTurnstile ? turnstileToken : undefined,
+        }),
       })
 
       const data = await response.json()
@@ -117,7 +214,25 @@ export function Admin() {
         // 加载相册列表
         loadAlbums()
       } else {
-        setAuthError('密码错误')
+        setAuthError(data.error || '密码错误')
+        
+        // 更新限流状态
+        if (data.attempts !== undefined) {
+          setRateLimitInfo(prev => ({
+            ...prev,
+            attempts: data.attempts,
+            requireTurnstile: data.requireTurnstile || false,
+            delay: data.delay || 0,
+          }))
+        }
+        
+        // 清空 Turnstile token
+        setTurnstileToken('')
+        
+        // 重置 Turnstile widget
+        if (window.turnstile && rateLimitInfo.requireTurnstile) {
+          window.turnstile.reset()
+        }
       }
     } catch (err) {
       setAuthError('连接失败，请检查网络或 Worker URL')
@@ -475,6 +590,26 @@ export function Admin() {
               请输入管理密码以继续
             </p>
 
+            {/* 限流警告 */}
+            {rateLimitInfo.attempts > 0 && !rateLimitInfo.isLocked && (
+              <div className="mt-4 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-sm text-yellow-600">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  已尝试 {rateLimitInfo.attempts} 次，还剩 {3 - rateLimitInfo.attempts} 次机会
+                </div>
+              </div>
+            )}
+
+            {/* 锁定状态 */}
+            {rateLimitInfo.isLocked && (
+              <div className="mt-4 rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-500">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-4 w-4" />
+                  账户已锁定，请稍后重试
+                </div>
+              </div>
+            )}
+
             <div className="mt-6 space-y-4">
               <div>
                 <label className="text-sm font-medium">密码</label>
@@ -485,8 +620,29 @@ export function Admin() {
                   onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
                   className="mt-1 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="输入管理密码"
+                  disabled={rateLimitInfo.isLocked}
                 />
               </div>
+
+              {/* Turnstile 验证 */}
+              {rateLimitInfo.requireTurnstile && !rateLimitInfo.isLocked && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
+                    人机验证
+                  </label>
+                  <div 
+                    className="cf-turnstile" 
+                    data-sitekey={TURNSTILE_SITE_KEY}
+                    data-theme="light"
+                    data-callback="onTurnstileSuccess"
+                    data-expired-callback="onTurnstileExpired"
+                  />
+                  {!turnstileLoaded && (
+                    <div className="text-xs text-muted-foreground">加载验证组件...</div>
+                  )}
+                </div>
+              )}
 
               {authError && (
                 <div className="flex items-center gap-2 text-sm text-red-500">
@@ -497,7 +653,7 @@ export function Admin() {
 
               <button
                 onClick={handleVerify}
-                disabled={authLoading || !password}
+                disabled={authLoading || !password || rateLimitInfo.isLocked || (rateLimitInfo.requireTurnstile && !turnstileToken)}
                 className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
               >
                 {authLoading ? (
@@ -505,6 +661,8 @@ export function Admin() {
                     <Loader2 className="h-4 w-4 animate-spin" />
                     验证中...
                   </span>
+                ) : rateLimitInfo.isLocked ? (
+                  '账户已锁定'
                 ) : (
                   '进入管理后台'
                 )}

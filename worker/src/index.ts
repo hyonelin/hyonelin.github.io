@@ -3,14 +3,18 @@
  * 
  * 功能:
  * 1. 密码验证
- * 2. 图片上传到 R2
- * 3. JSON 更新（index.json 和 albums.json）
+ * 2. 登录限流（失败延迟 + IP 锁定 + Turnstile）
+ * 3. 图片上传到 R2
+ * 4. JSON 更新（index.json 和 albums.json）
  */
 
 export interface Env {
   PHOTOS_BUCKET: R2Bucket
+  RATE_LIMIT: KVNamespace
   ADMIN_PASSWORD: string
   R2_BASE_URL: string
+  TURNSTILE_SECRET: string
+  TURNSTILE_SITE_KEY: string
 }
 
 // CORS 头
@@ -36,12 +40,86 @@ function errorResponse(message: string, status = 400) {
   return jsonResponse({ error: message }, status)
 }
 
-// 验证密码
-function verifyPassword(authHeader: string | null, env: Env): boolean {
-  if (!authHeader) return false
-  // 格式: Bearer <password>
-  const token = authHeader.replace('Bearer ', '')
-  return token === env.ADMIN_PASSWORD
+// 获取客户端 IP
+function getClientIP(request: Request): string {
+  const cf = request.cf as any
+  return cf?.ip || request.headers.get('x-forwarded-for') || 'unknown'
+}
+
+// 限流配置
+const RATE_LIMIT_CONFIG = {
+  MAX_ATTEMPTS: 3,           // 最大尝试次数
+  LOCKOUT_DURATION: 900,     // 锁定时长（秒）15分钟
+  BASE_DELAY: 1000,          // 基础延迟（毫秒）
+  MAX_DELAY: 30000,          // 最大延迟（毫秒）30秒
+}
+
+// 获取限流状态
+async function getRateLimitState(env: Env, ip: string): Promise<{
+  attempts: number
+  lockedUntil: number
+  requireTurnstile: boolean
+}> {
+  const key = `rate_limit:${ip}`
+  const data = await env.RATE_LIMIT.get(key, 'json') as any
+  
+  if (!data) {
+    return { attempts: 0, lockedUntil: 0, requireTurnstile: false }
+  }
+  
+  return {
+    attempts: data.attempts || 0,
+    lockedUntil: data.lockedUntil || 0,
+    requireTurnstile: data.attempts >= RATE_LIMIT_CONFIG.MAX_ATTEMPTS,
+  }
+}
+
+// 更新限流状态
+async function updateRateLimitState(env: Env, ip: string, success: boolean): Promise<void> {
+  const key = `rate_limit:${ip}`
+  const current = await getRateLimitState(env, ip)
+  
+  if (success) {
+    // 成功后清除记录
+    await env.RATE_LIMIT.delete(key)
+    return
+  }
+  
+  // 失败后增加计数
+  const newAttempts = current.attempts + 1
+  const lockedUntil = newAttempts >= RATE_LIMIT_CONFIG.MAX_ATTEMPTS 
+    ? Date.now() + RATE_LIMIT_CONFIG.LOCKOUT_DURATION * 1000 
+    : 0
+  
+  await env.RATE_LIMIT.put(key, JSON.stringify({
+    attempts: newAttempts,
+    lockedUntil,
+    lastAttempt: Date.now(),
+  }), {
+    expirationTtl: RATE_LIMIT_CONFIG.LOCKOUT_DURATION,
+  })
+}
+
+// 计算延迟时间
+function getDelay(attempts: number): number {
+  const delay = RATE_LIMIT_CONFIG.BASE_DELAY * Math.pow(2, attempts - 1)
+  return Math.min(delay, RATE_LIMIT_CONFIG.MAX_DELAY)
+}
+
+// 验证 Turnstile
+async function verifyTurnstile(token: string, ip: string, env: Env): Promise<boolean> {
+  const formData = new FormData()
+  formData.append('secret', env.TURNSTILE_SECRET)
+  formData.append('response', token)
+  formData.append('remoteip', ip)
+  
+  const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+    method: 'POST',
+    body: formData,
+  })
+  
+  const result = await response.json() as any
+  return result.success === true
 }
 
 // 照片元数据接口
@@ -106,6 +184,10 @@ export default {
 
     try {
       // 路由处理
+      if (path === '/api/rate-limit' && request.method === 'GET') {
+        return handleGetRateLimit(request, env)
+      }
+      
       if (path === '/api/verify' && request.method === 'POST') {
         return handleVerify(request, env)
       }
@@ -139,14 +221,76 @@ export default {
 }
 
 /**
+ * 获取限流状态
+ */
+async function handleGetRateLimit(request: Request, env: Env): Promise<Response> {
+  const ip = getClientIP(request)
+  const state = await getRateLimitState(env, ip)
+  
+  // 检查是否锁定
+  const now = Date.now()
+  const isLocked = state.lockedUntil > now
+  
+  return jsonResponse({
+    attempts: state.attempts,
+    requireTurnstile: state.requireTurnstile,
+    isLocked,
+    lockedUntil: isLocked ? state.lockedUntil : null,
+    delay: isLocked ? 0 : getDelay(state.attempts),
+  })
+}
+
+/**
  * 验证密码
  */
 async function handleVerify(request: Request, env: Env): Promise<Response> {
-  const authHeader = request.headers.get('Authorization')
+  const ip = getClientIP(request)
+  const state = await getRateLimitState(env, ip)
   
-  if (!verifyPassword(authHeader, env)) {
-    return errorResponse('Invalid password', 401)
+  // 检查是否锁定
+  const now = Date.now()
+  if (state.lockedUntil > now) {
+    const remaining = Math.ceil((state.lockedUntil - now) / 1000)
+    return errorResponse(`账户已锁定，请 ${remaining} 秒后重试`, 429)
   }
+  
+  // 解析请求体
+  const body = await request.json() as { password?: string; turnstileToken?: string }
+  const { password, turnstileToken } = body
+  
+  // 如果需要 Turnstile 验证
+  if (state.requireTurnstile) {
+    if (!turnstileToken) {
+      return errorResponse('请完成人机验证', 400)
+    }
+    
+    const turnstileValid = await verifyTurnstile(turnstileToken, ip, env)
+    if (!turnstileValid) {
+      return errorResponse('人机验证失败，请重试', 400)
+    }
+  }
+  
+  // 验证密码
+  if (password !== env.ADMIN_PASSWORD) {
+    await updateRateLimitState(env, ip, false)
+    
+    const newState = await getRateLimitState(env, ip)
+    const delay = getDelay(newState.attempts)
+    
+    // 添加延迟
+    await new Promise(resolve => setTimeout(resolve, delay))
+    
+    return jsonResponse({
+      success: false,
+      error: '密码错误',
+      attempts: newState.attempts,
+      requireTurnstile: newState.requireTurnstile,
+      delay: getDelay(newState.attempts),
+    }, 401)
+  }
+  
+  // 成功，清除限流记录
+  await updateRateLimitState(env, ip, true)
   
   return jsonResponse({ success: true, message: 'Verified' })
 }
@@ -157,7 +301,7 @@ async function handleVerify(request: Request, env: Env): Promise<Response> {
 async function handleUpload(request: Request, env: Env): Promise<Response> {
   // 验证密码
   const authHeader = request.headers.get('Authorization')
-  if (!verifyPassword(authHeader, env)) {
+  if (!authHeader || authHeader.replace('Bearer ', '') !== env.ADMIN_PASSWORD) {
     return errorResponse('Invalid password', 401)
   }
 
@@ -211,7 +355,7 @@ async function handleUpload(request: Request, env: Env): Promise<Response> {
 
   // 更新对应的 JSON 文件
   if (mode === 'album' && albumId) {
-    await addPhotoToAlbum(env, albumId, metadata)
+    await addPhotoToAlbumR2(env, albumId, metadata)
   } else {
     await addPhotoToIndex(env, metadata)
   }
@@ -274,7 +418,7 @@ async function handleGetAlbums(env: Env): Promise<Response> {
  */
 async function handleCreateAlbum(request: Request, env: Env): Promise<Response> {
   const authHeader = request.headers.get('Authorization')
-  if (!verifyPassword(authHeader, env)) {
+  if (!authHeader || authHeader.replace('Bearer ', '') !== env.ADMIN_PASSWORD) {
     return errorResponse('Invalid password', 401)
   }
 
@@ -370,7 +514,7 @@ async function addPhotoToIndex(env: Env, photo: PhotoMetadata): Promise<void> {
 /**
  * 添加照片到相册
  */
-async function addPhotoToAlbum(env: Env, albumId: string, photo: PhotoMetadata): Promise<void> {
+async function addPhotoToAlbumR2(env: Env, albumId: string, photo: PhotoMetadata): Promise<void> {
   const existing = await env.PHOTOS_BUCKET.get('photos/albums.json')
   
   if (!existing) {
@@ -405,7 +549,7 @@ async function addPhotoToAlbum(env: Env, albumId: string, photo: PhotoMetadata):
  */
 async function handleAddPhotoToAlbum(request: Request, env: Env): Promise<Response> {
   const authHeader = request.headers.get('Authorization')
-  if (!verifyPassword(authHeader, env)) {
+  if (!authHeader || authHeader.replace('Bearer ', '') !== env.ADMIN_PASSWORD) {
     return errorResponse('Invalid password', 401)
   }
 
@@ -417,7 +561,7 @@ async function handleAddPhotoToAlbum(request: Request, env: Env): Promise<Respon
   }
 
   try {
-    await addPhotoToAlbum(env, albumId, photo)
+    await addPhotoToAlbumR2(env, albumId, photo)
     return jsonResponse({ success: true })
   } catch (error) {
     return errorResponse((error as Error).message, 404)
