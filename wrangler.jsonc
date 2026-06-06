@@ -1,9 +1,16 @@
 {
-  "name": "resume",
-  "compatibility_date": "2026-02-12",
-  "main": "src/worker.js",
-  "assets": {
-    "directory": "./dist",
-    "binding": "ASSETS"
-  }
+	"name": "resume",
+	"compatibility_date": "2026-02-12",
+	"main": "src/worker.js",
+	"assets": {
+		"directory": "./dist",
+		"binding": "ASSETS"
+	},
+	"kv_namespaces": [
+		{
+			"binding": "RATE_LIMIT",
+			"id": "ef97c0d372c0483f8c927a8b04ac9b47",
+			"remote": true
+		}
+	]
 }
