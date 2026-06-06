@@ -122,12 +122,6 @@ export function Photography() {
     })
   }, [allPhotos, selectedYear, selectedCamera, selectedTags])
 
-  // 分页后的图片
-  const paginatedPhotos = useMemo(() => {
-    const endIndex = page * PHOTO_CONFIG.PAGE_SIZE
-    return filteredPhotos.slice(0, endIndex)
-  }, [filteredPhotos, page])
-
   // 总页数和是否还有更多
   const totalPages = Math.ceil(filteredPhotos.length / PHOTO_CONFIG.PAGE_SIZE)
   const hasNextPage = page < totalPages

@@ -731,7 +731,7 @@ export function Admin() {
                 {photoInfo.settings?.aperture && (
                   <div>
                     <span className="font-medium">光圈：</span>
-                    {photoInfo.settings.aperture}
+                    {photoInfo.settings.aperture ?? ''}
                   </div>
                 )}
                 {photoInfo.settings?.shutter && (
