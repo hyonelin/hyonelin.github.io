@@ -87,9 +87,34 @@ export function Admin() {
     delay: 0,
   })
 
+  // 倒计时状态
+  const [lockdownCountdown, setLockdownCountdown] = useState(0)
+
   // Turnstile 状态
   const [turnstileToken, setTurnstileToken] = useState<string>('')
   const [turnstileLoaded, setTurnstileLoaded] = useState(false)
+
+  // 动态倒计时
+  useEffect(() => {
+    if (!rateLimitInfo.lockedUntil) {
+      setLockdownCountdown(0)
+      return
+    }
+
+    const updateCountdown = () => {
+      const remaining = Math.max(0, Math.ceil((rateLimitInfo.lockedUntil! - Date.now()) / 1000))
+      setLockdownCountdown(remaining)
+      
+      if (remaining === 0) {
+        // 锁定结束，刷新状态
+        fetchRateLimitInfo()
+      }
+    }
+
+    updateCountdown()
+    const interval = setInterval(updateCountdown, 1000)
+    return () => clearInterval(interval)
+  }, [rateLimitInfo.lockedUntil])
 
   // 加载 Turnstile 脚本
   useEffect(() => {
@@ -591,11 +616,21 @@ export function Admin() {
             </p>
 
             {/* 限流警告 */}
-            {rateLimitInfo.attempts > 0 && !rateLimitInfo.isLocked && (
+            {rateLimitInfo.attempts > 0 && !rateLimitInfo.isLocked && !rateLimitInfo.requireTurnstile && (
               <div className="mt-4 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-sm text-yellow-600">
                 <div className="flex items-center gap-2">
                   <AlertCircle className="h-4 w-4" />
                   已尝试 {rateLimitInfo.attempts} 次，还剩 {3 - rateLimitInfo.attempts} 次机会
+                </div>
+              </div>
+            )}
+
+            {/* 需要 Turnstile 验证 */}
+            {rateLimitInfo.requireTurnstile && !rateLimitInfo.isLocked && (
+              <div className="mt-4 rounded-lg border border-orange-500/50 bg-orange-500/10 p-3 text-sm text-orange-600">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-4 w-4" />
+                  已尝试 {rateLimitInfo.attempts} 次，请完成人机验证后继续
                 </div>
               </div>
             )}
@@ -605,7 +640,7 @@ export function Admin() {
               <div className="mt-4 rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-500">
                 <div className="flex items-center gap-2">
                   <Shield className="h-4 w-4" />
-                  账户已锁定，请稍后重试
+                  账户已锁定，请 <span className="font-bold">{lockdownCountdown}</span> 秒后重试
                 </div>
               </div>
             )}

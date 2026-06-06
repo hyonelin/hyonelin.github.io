@@ -48,7 +48,8 @@ function getClientIP(request: Request): string {
 
 // 限流配置
 const RATE_LIMIT_CONFIG = {
-  MAX_ATTEMPTS: 3,           // 最大尝试次数
+  MAX_ATTEMPTS: 3,           // 最大尝试次数（之后需要 Turnstile）
+  LOCKOUT_ATTEMPTS: 5,       // 锁定前的最大尝试次数
   LOCKOUT_DURATION: 900,     // 锁定时长（秒）15分钟
   BASE_DELAY: 1000,          // 基础延迟（毫秒）
   MAX_DELAY: 30000,          // 最大延迟（毫秒）30秒
@@ -67,10 +68,20 @@ async function getRateLimitState(env: Env, ip: string): Promise<{
     return { attempts: 0, lockedUntil: 0, requireTurnstile: false }
   }
   
+  const attempts = data.attempts || 0
+  const lockedUntil = data.lockedUntil || 0
+  const now = Date.now()
+  
+  // 如果锁定已过期，重置状态
+  if (lockedUntil > 0 && lockedUntil < now) {
+    return { attempts: 0, lockedUntil: 0, requireTurnstile: false }
+  }
+  
   return {
-    attempts: data.attempts || 0,
-    lockedUntil: data.lockedUntil || 0,
-    requireTurnstile: data.attempts >= RATE_LIMIT_CONFIG.MAX_ATTEMPTS,
+    attempts,
+    lockedUntil,
+    // 3 次后需要 Turnstile
+    requireTurnstile: attempts >= RATE_LIMIT_CONFIG.MAX_ATTEMPTS && attempts < RATE_LIMIT_CONFIG.LOCKOUT_ATTEMPTS,
   }
 }
 
@@ -87,7 +98,9 @@ async function updateRateLimitState(env: Env, ip: string, success: boolean): Pro
   
   // 失败后增加计数
   const newAttempts = current.attempts + 1
-  const lockedUntil = newAttempts >= RATE_LIMIT_CONFIG.MAX_ATTEMPTS 
+  
+  // 5 次后才锁定
+  const lockedUntil = newAttempts >= RATE_LIMIT_CONFIG.LOCKOUT_ATTEMPTS 
     ? Date.now() + RATE_LIMIT_CONFIG.LOCKOUT_DURATION * 1000 
     : 0
   
