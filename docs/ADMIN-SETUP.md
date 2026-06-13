@@ -1,236 +1,145 @@
-# Admin 管理后台部署指南
+# Admin 安全升级指南
 
-本指南将一步步教你如何部署照片管理后台。
+这份文档对应当前的安全方案：`密码 + TOTP / 恢复码 + 会话 + Turnstile + 限流`。
 
 ---
 
-## 架构概览
+## 目标架构
 
 ```
-Admin 页面 (前端) → Cloudflare Worker (后端) → Cloudflare R2 (存储)
+Admin 前端 -> Cloudflare Worker -> R2 / KV
 ```
 
-- **Admin 页面**: `/admin` 路由，用于上传照片
-- **Worker**: 处理密码验证、图片上传、JSON 更新
-- **R2**: 存储图片和 JSON 文件
+- `R2`：存照片、文章、JSON
+- `KV`：存登录限流和短期 session
+- `Worker`：做登录验证、二次验证、签发 session、保护写接口
+- `Turnstile`：只作为风控，不作为唯一认证
 
 ---
 
-## 第一步：在 Cloudflare 创建 API Token
+## 你需要在 Cloudflare 做什么
 
-1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com/)
+### 1. 创建 / 确认 R2 Bucket
 
-2. 点击右上角头像 → **My Profile** → **API Tokens**
-
-3. 点击 **Create Token**
-
-4. 选择 **Create Custom Token**
-
-5. 配置权限：
-   - **Token name**: `photo-admin`
-   - **Permissions**:
-     - `Account` → `Cloudflare Workers` → `Edit`
-     - `Account` → `Workers R2 Storage` → `Edit`
-   - **Account Resources**: `Include` → `All accounts`
-   - **Zone Resources**: `Include` → `All zones`
-
-6. 点击 **Continue to summary** → **Create Token**
-
-7. **重要**: 复制生成的 Token，只显示一次！
-
----
-
-## 第二步：本地安装 Wrangler
-
-Wrangler 是 Cloudflare 的命令行工具。
+确保已有一个公开读取的 bucket，例如：
 
 ```bash
-# 安装 wrangler
-npm install -g wrangler
-
-# 登录 Cloudflare
-wrangler login
+wrangler r2 bucket create hyonelin-gallery
 ```
 
-登录时会打开浏览器，授权即可。
+### 2. 创建 / 确认 KV Namespace
 
----
-
-## 第三步：配置 Worker 环境变量
-
-1. 进入 Worker 目录：
-   ```bash
-   cd worker
-   ```
-
-2. 复制环境变量示例文件：
-   ```bash
-   cp .dev.vars.example .dev.vars
-   ```
-
-3. 编辑 `.dev.vars` 文件：
-   ```
-   ADMIN_PASSWORD=你的管理密码
-   R2_BASE_URL=https://pub-e00c2328da0440458b54fe471887ca39.r2.dev
-   ```
-
-4. 安装依赖：
-   ```bash
-   npm install
-   ```
-
----
-
-## 第四步：创建 R2 Bucket（如果还没有）
+用于限流和 session 存储：
 
 ```bash
-# 创建名为 photos 的 bucket
-wrangler r2 bucket create photos
+wrangler kv namespace create RATE_LIMIT
 ```
 
-如果提示 bucket 已存在，说明你已经创建过了，可以跳过这步。
+把返回的 namespace ID 写进 `worker/wrangler.toml`。
 
----
+### 3. 设置 Worker 环境变量
 
-## 第五步：上传现有 JSON 文件到 R2
+在 Cloudflare Dashboard 或 `wrangler secret put` 中配置这些值：
 
-Worker 需要从 R2 读取 JSON 文件，所以需要先把现有的 JSON 上传上去。
+- `ADMIN_PASSWORD`：管理后台密码
+- `ADMIN_SESSION_SECRET`：随机长字符串，用于 session 相关签名或后续扩展
+- `ADMIN_TOTP_SECRET`：TOTP base32 secret
+- `ADMIN_BACKUP_CODE_HASHES`：恢复码哈希数组
+- `R2_BASE_URL`：R2 公共访问地址
+- `TURNSTILE_SECRET`：Turnstile secret key
+- `ALLOWED_ORIGIN`：你的前端站点来源，例如 `https://hyonelin.github.io`
+- `SESSION_TTL_SECONDS`：可选，默认 8 小时
+
+### 4. 配置 Turnstile
+
+创建一个 Turnstile site，并把 site key / secret 配好。
+
+建议只在这些情况下启用：
+
+- 多次失败后
+- 新设备登录
+- 恢复码频繁触发时
+
+### 5. 部署 Worker
 
 ```bash
-# 上传 index.json
-wrangler r2 object put photos/photos/index.json --file=public/photos/index.json
-
-# 上传 albums.json
-wrangler r2 object put photos/photos/albums.json --file=public/photos/albums.json
+cd worker
+npm install
+npx wrangler deploy
 ```
 
 ---
 
-## 第六步：部署 Worker
+## 本地生成 TOTP 和恢复码
+
+仓库已经提供了生成脚本：
 
 ```bash
-# 在 worker 目录下
-wrangler deploy
+npm run auth:generate
 ```
 
-部署成功后，你会看到类似这样的输出：
+脚本会输出：
 
-```
-✨ Success! Uploaded photo-admin (1.23 sec)
-   https://photo-admin.你的子域名.workers.dev
-```
+- `ADMIN_TOTP_SECRET`
+- `ADMIN_BACKUP_CODE_HASHES`
+- `OTPAUTH_URI`
+- 一组恢复码明文
 
-**复制这个 URL！** 这是你 Worker 的地址。
+把输出里的：
+
+- `ADMIN_TOTP_SECRET` 写入 Cloudflare 环境变量
+- `ADMIN_BACKUP_CODE_HASHES` 写入 Cloudflare 环境变量
+- 恢复码明文保存到离线安全位置，只显示一次
 
 ---
 
-## 第七步：在 Cloudflare Dashboard 配置环境变量
+## Admin 前端如何登录
 
-为了安全，我们需要在 Dashboard 中配置环境变量（而不是写在代码里）。
+当前登录顺序是：
 
-1. 进入 [Cloudflare Dashboard](https://dash.cloudflare.com/)
-
-2. 左侧菜单 → **Workers & Pages**
-
-3. 点击你刚部署的 `photo-admin` Worker
-
-4. 点击 **Settings** → **Variables**
-
-5. 添加环境变量：
-   - `ADMIN_PASSWORD`: 你的管理密码
-   - `R2_BASE_URL`: `https://pub-e00c2328da0440458b54fe471887ca39.r2.dev`
-
-6. 点击 **Save and deploy**
+1. 输入 `ADMIN_PASSWORD`
+2. 输入 6 位 TOTP
+3. 如果 TOTP 不可用，输入恢复码
+4. 通过后 Worker 返回短期 session
+5. 后续上传、建相册等接口都用 session 访问
 
 ---
 
-## 第八步：更新 Admin 页面的 Worker URL
+## 本地开发
 
-编辑 `src/pages/Admin.tsx`，找到这一行：
+1. 启动 Worker：
 
-```typescript
-const WORKER_URL = 'https://photo-admin.your-subdomain.workers.dev'
-```
-
-替换为你的 Worker URL：
-
-```typescript
-const WORKER_URL = 'https://photo-admin.你的子域名.workers.dev'
-```
-
----
-
-## 第九步：测试
-
-1. 启动本地开发服务器：
-   ```bash
-   npm run dev
-   ```
-
-2. 访问 `http://localhost:5173/admin`
-
-3. 输入你在 `ADMIN_PASSWORD` 中设置的密码
-
-4. 尝试上传一张照片
-
----
-
-## 常见问题
-
-### Q: 上传失败，提示 "Failed to load albums"
-
-A: 你需要先上传现有的 JSON 文件到 R2：
 ```bash
-wrangler r2 object put photos/photos/index.json --file=public/photos/index.json
-wrangler r2 object put photos/photos/albums.json --file=public/photos/albums.json
+cd worker
+npm run dev
 ```
 
-### Q: Worker 部署失败
+2. 启动前端：
 
-A: 检查你的 API Token 权限是否正确设置。
+```bash
+npm run dev
+```
 
-### Q: 密码验证失败
-
-A: 确保你在 Cloudflare Dashboard 中正确设置了 `ADMIN_PASSWORD` 环境变量。
-
-### Q: 图片上传成功但无法访问
-
-A: 检查 R2 bucket 是否开启了公开访问。在 Cloudflare Dashboard → R2 → photos bucket → Settings → Public access。
+3. 打开 `/admin`
 
 ---
 
-## 文件结构
+## 推荐安全配置
 
-```
-worker/
-├── src/
-│   └── index.ts        # Worker 主代码
-├── wrangler.toml       # Worker 配置
-├── package.json
-├── tsconfig.json
-├── .dev.vars           # 本地环境变量（不提交）
-└── .dev.vars.example   # 环境变量示例
-
-src/pages/
-└── Admin.tsx           # Admin 页面
-```
+- 使用高强度 `ADMIN_PASSWORD`
+- 使用独立的 `ADMIN_TOTP_SECRET`
+- 恢复码每次更换后台密码时一起轮换
+- 只给 `ALLOWED_ORIGIN` 放行你的前端域名
+- 不要把秘密值提交到 git
 
 ---
 
-## 安全建议
+## 后续升级建议
 
-1. **使用强密码**: `ADMIN_PASSWORD` 应该是一个复杂的密码
-2. **不要提交 `.dev.vars`**: 这个文件包含敏感信息
-3. **定期更换密码**: 建议每隔一段时间更换管理密码
-4. **限制 R2 访问**: 确保 R2 bucket 只有读取权限是公开的
+如果你之后想继续加固，下一步建议上：
 
----
+- `passkey(WebAuthn)` 作为主登录方式
+- `step-up` 二次确认用于删除 / 发布 / 绑定新设备
+- 操作审计日志
+- 管理员登录设备白名单
 
-## 成本
-
-Cloudflare 免费额度：
-- Workers: 每天 10 万次请求
-- R2 存储: 10 GB
-- R2 操作: 100 万次上传/月，1000 万次读取/月
-
-对于个人博客完全够用！

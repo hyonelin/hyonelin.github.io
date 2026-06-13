@@ -12,11 +12,12 @@ declare global {
 }
 import { Link } from 'react-router-dom'
 import { Navbar } from '@/components/Navbar'
-import { ArrowLeft, Upload, Loader2, Plus, X, FolderOpen, Calendar, Check, AlertCircle, Settings, Shield } from 'lucide-react'
+import { ArrowLeft, Upload, Loader2, Plus, X, FolderOpen, Calendar, Check, AlertCircle, Settings, Shield, LogOut } from 'lucide-react'
 import ExifReader from 'exifreader'
 
 // Worker API URL
 const WORKER_URL = 'https://photo-admin.hyonelin.workers.dev'
+const SESSION_STORAGE_KEY = 'admin_session'
 
 // Turnstile Site Key
 const TURNSTILE_SITE_KEY = '0x4AAAAAADfykz_TUNYFStnF'
@@ -68,9 +69,13 @@ const CAMERA_PRESETS = [
 export function Admin() {
   // 认证状态
   const [password, setPassword] = useState('')
+  const [totpCode, setTotpCode] = useState('')
+  const [backupCode, setBackupCode] = useState('')
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [authChecked, setAuthChecked] = useState(false)
   const [authLoading, setAuthLoading] = useState(false)
   const [authError, setAuthError] = useState('')
+  const [sessionId, setSessionId] = useState(() => sessionStorage.getItem(SESSION_STORAGE_KEY) || '')
 
   // 限流状态
   const [rateLimitInfo, setRateLimitInfo] = useState<{
@@ -93,6 +98,25 @@ export function Admin() {
   // Turnstile 状态
   const [turnstileToken, setTurnstileToken] = useState<string>('')
   const [turnstileLoaded, setTurnstileLoaded] = useState(false)
+
+  const authHeaders = () => {
+    const headers: Record<string, string> = {}
+    if (sessionId) {
+      headers.Authorization = `Bearer ${sessionId}`
+    }
+    return headers
+  }
+
+  const authFetch = (input: RequestInfo | URL, init: RequestInit = {}) => {
+    const headers = new Headers(init.headers)
+    Object.entries(authHeaders()).forEach(([key, value]) => headers.set(key, value))
+
+    return fetch(input, {
+      ...init,
+      credentials: 'include',
+      headers,
+    })
+  }
 
   // 动态倒计时
   useEffect(() => {
@@ -148,6 +172,26 @@ export function Admin() {
       fetchRateLimitInfo()
     }
   }, [isAuthenticated])
+
+  // 检查已有 session
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const response = await authFetch(`${WORKER_URL}/api/auth/status`)
+        const data = await response.json()
+        if (response.ok && data.authenticated) {
+          setIsAuthenticated(true)
+          loadAlbums()
+        }
+      } catch (err) {
+        console.error('Failed to check session:', err)
+      } finally {
+        setAuthChecked(true)
+      }
+    }
+
+    checkSession()
+  }, [sessionId])
 
   // Turnstile 回调函数
   useEffect(() => {
@@ -221,13 +265,16 @@ export function Admin() {
     setAuthError('')
 
     try {
-      const response = await fetch(`${WORKER_URL}/api/verify`, {
+      const response = await fetch(`${WORKER_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           password,
+          totpCode,
+          backupCode,
           turnstileToken: rateLimitInfo.requireTurnstile ? turnstileToken : undefined,
         }),
       })
@@ -236,6 +283,10 @@ export function Admin() {
 
       if (response.ok && data.success) {
         setIsAuthenticated(true)
+        if (data.sessionId) {
+          setSessionId(data.sessionId)
+          sessionStorage.setItem(SESSION_STORAGE_KEY, data.sessionId)
+        }
         // 加载相册列表
         loadAlbums()
       } else {
@@ -266,10 +317,25 @@ export function Admin() {
     }
   }
 
+  const handleLogout = async () => {
+    try {
+      await authFetch(`${WORKER_URL}/api/auth/logout`, {
+        method: 'POST',
+      })
+    } finally {
+      setIsAuthenticated(false)
+      setSessionId('')
+      sessionStorage.removeItem(SESSION_STORAGE_KEY)
+      setPassword('')
+      setTotpCode('')
+      setBackupCode('')
+    }
+  }
+
   // 加载相册列表
   const loadAlbums = async () => {
     try {
-      const response = await fetch(`${WORKER_URL}/api/albums`)
+      const response = await authFetch(`${WORKER_URL}/api/albums`)
       const data = await response.json()
       setAlbums(data.albums || [])
     } catch (err) {
@@ -288,10 +354,9 @@ export function Admin() {
     setError('')
 
     try {
-      const response = await fetch(`${WORKER_URL}/api/albums`, {
+      const response = await authFetch(`${WORKER_URL}/api/albums`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${password}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(newAlbum),
@@ -534,11 +599,10 @@ export function Admin() {
         formData.append('metadata', JSON.stringify(photoInfo))
 
         // 上传
-        const response = await fetch(`${WORKER_URL}/api/upload`, {
+        const response = await authFetch(`${WORKER_URL}/api/upload`, {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${password}`,
-          },
+          headers: authHeaders(),
+          credentials: 'include',
           body: formData,
         })
 
@@ -598,6 +662,18 @@ export function Admin() {
 
   // 未认证时显示登录界面
   if (!isAuthenticated) {
+    if (!authChecked) {
+      return (
+        <main className="relative min-h-screen bg-background px-6 py-12 sm:py-24">
+          <div className="mx-auto max-w-md">
+            <div className="rounded-lg border bg-card p-6">
+              <p className="text-sm text-muted-foreground">验证会话中...</p>
+            </div>
+          </div>
+        </main>
+      )
+    }
+
     return (
       <main className="relative min-h-screen bg-background px-6 py-12 sm:py-24">
         <div className="mx-auto max-w-md">
@@ -655,6 +731,33 @@ export function Admin() {
                   onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
                   className="mt-1 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="输入管理密码"
+                  disabled={rateLimitInfo.isLocked}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">二次验证代码</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  value={totpCode}
+                  onChange={(e) => setTotpCode(e.target.value)}
+                  className="mt-1 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="6 位 TOTP 代码"
+                  disabled={rateLimitInfo.isLocked}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">备用恢复码</label>
+                <input
+                  type="text"
+                  autoComplete="off"
+                  value={backupCode}
+                  onChange={(e) => setBackupCode(e.target.value)}
+                  className="mt-1 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="可选，仅在 TOTP 不可用时使用"
                   disabled={rateLimitInfo.isLocked}
                 />
               </div>
@@ -725,6 +828,16 @@ export function Admin() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold">照片管理</h1>
           <p className="mt-2 text-muted-foreground">上传照片到 Cloudflare R2</p>
+        </div>
+
+        <div className="mb-6 flex justify-end">
+          <button
+            onClick={handleLogout}
+            className="inline-flex items-center gap-2 rounded-lg border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
+          >
+            <LogOut className="h-4 w-4" />
+            退出登录
+          </button>
         </div>
 
         {/* 上传模式选择 */}

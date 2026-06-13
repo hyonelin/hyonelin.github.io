@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "auth:generate": "node scripts/generate-admin-auth.js",
     "migrate:index": "node scripts/migrate-index.ts",
     "migrate:r2": "bash scripts/migrate-to-r2.sh",
     "clean:images": "bash scripts/clean-local-images.sh"
