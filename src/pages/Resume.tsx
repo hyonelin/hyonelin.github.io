@@ -113,7 +113,7 @@ export function Resume() {
             <p className="mt-1 text-muted-foreground">{t('profile.description')}</p>
             <p className="mt-1 text-sm text-muted-foreground">
               {t('profile.location')} • 
-              Email: lin@hyonelin.com
+              Email: wen_xuanlin@outlook.com
             </p>
           </div>
         </div>
@@ -124,7 +124,7 @@ export function Resume() {
           <Skills />
           <Work />
           <Education />
-          <Projects />
+          <Projects variant="detailed" />
           <Contact />
         </div>
 

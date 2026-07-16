@@ -26,14 +26,31 @@
     "title": "教育背景"
   },
   "projects": {
-    "title": "我的项目",
-    "description": "这里是我参与开发的一些项目，涵盖了不同的技术栈和应用场景。",
+    "title": "精选作品",
+    "description": "从个人站到内部提效，再到 AI 和折腾兴趣，挑了几件代表性的。",
     "website": "网站",
-    "source": "源码"
+    "source": "源码",
+    "blog": "博客",
+    "internal": "内部项目",
+    "problem": "问题",
+    "solution": "方案",
+    "impact": "结果",
+    "category": {
+      "open": "公开",
+      "work": "工作",
+      "hobby": "兴趣"
+    }
+  },
+  "quickLinks": {
+    "title": "继续了解",
+    "description": "简历写细一点，摄影和博客则更轻松。",
+    "resumeHint": "经历与教育背景",
+    "photoHint": "相册与筛选浏览",
+    "blogHint": "折腾笔记与记录"
   },
   "contact": {
     "title": "联系我",
-    "description": "想要交流或合作？欢迎通过以下方式联系我，我会尽快回复。"
+    "description": "想聊聊技术、摄影或合作，随时发邮件或加微信。"
   },
   "blog": {
     "title": "博客",
@@ -178,8 +195,27 @@
     }
   },
   "projectInfo": {
-    "underConstruction": "施工中。。。",
-    "comingSoon": "即将为您呈现，烦请您稍后再来~",
-    "dates": "2024年1月 - 至今"
+    "website": {
+      "title": "个人主页与摄影作品集",
+      "description": "用 React + TypeScript 搭的个人站，放介绍、博客和摄影。照片存在 Cloudflare R2，后面还会继续改性能和体验。"
+    },
+    "automation": {
+      "title": "企业 IT 自动化与内部提效",
+      "description": "用 Power Automate 和 React / Python，把日常 IT 里的重复活自动化掉。",
+      "problem": "支持工作里有不少重复操作，占掉团队不少时间。",
+      "solution": "用 Power Automate 搭流程，再用 React / Python 做轻量内部工具，覆盖常见重复场景。",
+      "impact": "维护 300+ 条自动化流程，每月大约节省 50 小时人工，服务约 1,500 名内部用户。"
+    },
+    "aiAssistant": {
+      "title": "AI 驱动的 IT 效率工具",
+      "description": "用 Dify 和大模型，尝试把知识检索和流程辅助接到 IT 日常里。",
+      "problem": "常见问题反复被问，查文档和走流程还是偏慢。",
+      "solution": "结合 Dify 与大模型，探索知识检索、流程辅助和内部智能工具。",
+      "impact": "仍在落地中，目标是让常见问题和重复操作更快完成。"
+    },
+    "homekit": {
+      "title": "HomeKit 与旧设备改造",
+      "description": "把闲置设备用起来：旧 iPad 改造成音箱控制端，旧手机接入 HomeKit 做监控，并写成实践笔记。"
+    }
   }
 }

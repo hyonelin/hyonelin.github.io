@@ -26,14 +26,31 @@
     "title": "Education"
   },
   "projects": {
-    "title": "My Projects",
-    "description": "Here are some projects I've worked on, covering various tech stacks and use cases.",
+    "title": "Selected Work",
+    "description": "A short mix of personal work, internal tooling, AI experiments, and hobby builds.",
     "website": "Website",
-    "source": "Source"
+    "source": "Source",
+    "blog": "Blog",
+    "internal": "Internal",
+    "problem": "Problem",
+    "solution": "Solution",
+    "impact": "Impact",
+    "category": {
+      "open": "Open",
+      "work": "Work",
+      "hobby": "Hobby"
+    }
+  },
+  "quickLinks": {
+    "title": "Explore more",
+    "description": "Resume for the details; photography and blog for everything else.",
+    "resumeHint": "Experience & education",
+    "photoHint": "Albums & filters",
+    "blogHint": "Notes & DIY posts"
   },
   "contact": {
     "title": "Contact Me",
-    "description": "Want to chat or collaborate? Feel free to reach out through any of the following channels."
+    "description": "Want to talk tech, photography, or collaboration? Email or WeChat works."
   },
   "blog": {
     "title": "Blog",
@@ -178,8 +195,27 @@
     }
   },
   "projectInfo": {
-    "underConstruction": "Under Construction...",
-    "comingSoon": "It will be presented to you shortly, please come back later~",
-    "dates": "Jan 2024 - Present"
+    "website": {
+      "title": "Personal Website & Photography",
+      "description": "A React + TypeScript site for my profile, blog, and photography. Photos live on Cloudflare R2; I'm still tuning performance and UX."
+    },
+    "automation": {
+      "title": "Enterprise IT Automation & Tools",
+      "description": "Automating repetitive IT work with Power Automate plus lightweight React / Python tools.",
+      "problem": "Too much time went into repetitive support operations.",
+      "solution": "Built Power Automate workflows and small React / Python tools for recurring tasks.",
+      "impact": "300+ workflows in use, ~50 hours of manual effort saved each month, supporting ~1,500 internal users."
+    },
+    "aiAssistant": {
+      "title": "AI-powered IT Assistant",
+      "description": "Using Dify and LLMs to bring knowledge search and workflow help into everyday IT support.",
+      "problem": "The same questions kept coming back, and looking things up was still slow.",
+      "solution": "Exploring Dify and LLMs for knowledge assistance, workflow guidance, and internal tools.",
+      "impact": "Still rolling out — aimed at finishing common requests faster."
+    },
+    "homekit": {
+      "title": "HomeKit & Hardware Projects",
+      "description": "Repurposing unused devices: an old iPad as a speaker control panel, and legacy phones as HomeKit cameras — with write-ups on the blog."
+    }
   }
 }
