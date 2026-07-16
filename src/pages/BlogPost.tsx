@@ -7,6 +7,7 @@ import { Navbar } from '@/components/Navbar'
 import { Badge } from '@/components/Badge'
 import { ArrowLeft, Calendar } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 interface PostMeta {
   title: string
@@ -17,6 +18,7 @@ interface PostMeta {
 
 export function BlogPost() {
   const { t, i18n } = useTranslation()
+  usePageTitle('pageTitle.post')
   const { slug } = useParams<{ slug: string }>()
   const [content, setContent] = useState('')
   const [meta, setMeta] = useState<PostMeta | null>(null)

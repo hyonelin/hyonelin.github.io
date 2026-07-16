@@ -6,10 +6,12 @@ import { PhotoModal } from '@/components/PhotoModal'
 import { ArrowLeft, MapPin, Calendar, Camera, Loader2 } from 'lucide-react'
 import { getImageUrl, R2_BASE_URL, type PhotoMetadata, type PhotoAlbum } from '@/lib/photos'
 import { useTranslation } from 'react-i18next'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 export function PhotoAlbumPage() {
   const { albumId } = useParams<{ albumId: string }>()
   const { t } = useTranslation()
+  usePageTitle('pageTitle.album')
   
   const [album, setAlbum] = useState<PhotoAlbum | null>(null)
   const [loading, setLoading] = useState(true)

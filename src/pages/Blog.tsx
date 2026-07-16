@@ -5,6 +5,7 @@ import { Navbar } from '@/components/Navbar'
 import { Badge } from '@/components/Badge'
 import { ArrowLeft, Calendar } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 interface BlogPost {
   slug: string
@@ -16,6 +17,7 @@ interface BlogPost {
 
 export function Blog() {
   const { t, i18n } = useTranslation()
+  usePageTitle('pageTitle.blog')
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedTag, setSelectedTag] = useState<string>('all')

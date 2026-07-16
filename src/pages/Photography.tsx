@@ -6,9 +6,11 @@ import { PhotoModal } from '@/components/PhotoModal'
 import { ArrowLeft, MapPin, X, Camera, Calendar, Tag, Loader2, FolderOpen } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getImageUrl, R2_BASE_URL, PHOTO_CONFIG, type PhotoMetadata, type PhotoIndex, type PhotoAlbum } from '@/lib/photos'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 export function Photography() {
   const { t } = useTranslation()
+  usePageTitle('pageTitle.photography')
 
   // 全部图片数据
   const [allPhotos, setAllPhotos] = useState<PhotoMetadata[]>([])
@@ -331,7 +333,7 @@ export function Photography() {
                     }`}
                   >
                     <Tag className="h-4 w-4" />
-                    {t('photography.tags')} ({availableTags.length})
+                    {t('photography.tagsLabel')} ({availableTags.length})
                   </button>
                 </div>
 

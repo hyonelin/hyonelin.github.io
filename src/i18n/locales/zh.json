@@ -52,6 +52,15 @@
     "download": "下载 PDF",
     "printVersion": "打印版本"
   },
+  "pageTitle": {
+    "home": "主页",
+    "resume": "简历",
+    "blog": "博客",
+    "post": "文章",
+    "photography": "摄影",
+    "album": "相册",
+    "admin": "管理"
+  },
   "resumePreview": {
     "title": "简历预览",
     "subtitle": "查看完整的专业简历，适合招聘人员和合作方",
@@ -60,7 +69,7 @@
     "education": "教育背景",
     "skills": "技能亮点",
     "latestExperience": "最新工作经历",
-    "experienceDescription": "负责核心产品的架构设计和开发，使用 React、TypeScript 和 Node.js 构建高性能的 Web 应用",
+    "experienceDescription": "企业 IT 支持，并用 Power Automate、React、Python 做内部提效与自动化",
     "viewFullResume": "查看完整简历",
     "openInNewTab": "新标签页打开"
   },
@@ -84,7 +93,7 @@
     "byMonth": "按月份",
     "year": "年份",
     "camera": "相机",
-    "tags": "标签",
+    "tagsLabel": "标签",
     "albums": "项目相册",
     "noAlbums": "暂无项目相册",
     "albumNotFound": "相册未找到",
@@ -121,7 +130,7 @@
   "profile": {
     "location": "上海, 中国",
     "description": "IT 技术支持工程师 & 软件工程师",
-    "summary": "我是一名充满热情的软件工程师，专注于构建优秀的用户体验和高质量的代码。我喜欢探索新技术，解决复杂问题，并与团队合作创造有价值的产品。"
+    "summary": "我是 William Wen，在特斯拉上海做 IT 技术支持。白天处理终端、账号和办公环境相关的问题；空下来会用 Power Automate、React 和 Python，给团队和业务做点自动化和小工具，少干点重复活。最近在试 Dify 和大模型，想看看 AI 能不能真正接进日常 IT 场景。业余拍拍照，也折腾 HomeKit 和旧设备改造。"
   },
   "workExperience": {
     "tesla": {
@@ -129,7 +138,7 @@
       "title": "IT 技术支持工程师",
       "location": "上海",
       "start": "2022年4月",
-      "description": "负责核心产品的架构设计和开发，使用 React、TypeScript 和 Node.js 构建高性能的 Web 应用。优化了系统性能，提升了 50% 的页面加载速度。"
+      "description": "• 为约 1,500 名内部员工提供企业 IT 支持，覆盖终端设备、账号权限、办公软件和基础 IT 服务，并参与 APAC 区域相关协作。\n• 和 IT 团队、业务部门一起梳理支持流程，尽量让问题响应更快、体验更顺。\n• 用 Power Automate 设计并维护 300+ 条自动化流程，减少重复操作，每月大约节省 50 小时人工。\n• 用 React 和 Python 做内部工具和轻量应用，方便 IT 团队和业务同事提高效率。\n• 持续试水 Dify 与大模型在企业 IT 场景的用法，推动知识检索、流程辅助等能力落地。"
     },
     "dalian": {
       "company": "大连盛捷国际货运代理有限公司",

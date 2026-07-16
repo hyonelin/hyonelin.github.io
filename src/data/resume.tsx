@@ -12,16 +12,16 @@ export const DATA = {
   summaryKey: "profile.summary",
   avatarUrl: "/avatar.png",
   skills: [
+    "Power Automate",
+    "JSON",
+    "Microsoft 365",
+    "macOS",
+    "Networking",
     "React",
-    "TypeScript",
-    "Node.js",
     "Python",
-    "Go",
-    "PostgreSQL",
-    "Docker",
-    "Kubernetes",
-    "AWS",
+    "MySQL",
     "Git",
+    "Docker",
   ],
   navbar: [
     { href: "#hero", labelKey: "nav.home", icon: Home },
@@ -35,7 +35,7 @@ export const DATA = {
     { href: "/photography", labelKey: "nav.photography", icon: Camera, isRoute: true },
   ],
   contact: {
-    email: "hello@example.com",
+    email: "wen_xuanlin@outlook.com",
     social: [
       {
         name: "GitHub",

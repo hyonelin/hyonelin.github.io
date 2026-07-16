@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 // Turnstile 回调函数（全局声明）
 declare global {
@@ -66,6 +67,8 @@ const CAMERA_PRESETS = [
 ]
 
 export function Admin() {
+  usePageTitle('pageTitle.admin')
+
   // 认证状态
   const [password, setPassword] = useState('')
   const [isAuthenticated, setIsAuthenticated] = useState(false)

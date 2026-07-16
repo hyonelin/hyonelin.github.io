@@ -7,6 +7,7 @@
     "projects": "Projects",
     "blog": "Blog",
     "photography": "Photography",
+    "resume": "Resume",
     "contact": "Contact"
   },
   "hero": {
@@ -51,6 +52,15 @@
     "download": "Download PDF",
     "printVersion": "Print Version"
   },
+  "pageTitle": {
+    "home": "Home",
+    "resume": "Resume",
+    "blog": "Blog",
+    "post": "Post",
+    "photography": "Photos",
+    "album": "Album",
+    "admin": "Admin"
+  },
   "resumePreview": {
     "title": "Resume Preview",
     "subtitle": "View complete professional resume suitable for recruiters and partners",
@@ -59,7 +69,7 @@
     "education": "Education",
     "skills": "Skills",
     "latestExperience": "Latest Experience",
-    "experienceDescription": "Responsible for core product architecture and development, building high-performance web applications using React, TypeScript, and Node.js",
+    "experienceDescription": "Enterprise IT support, plus internal tooling and automation with Power Automate, React, and Python",
     "viewFullResume": "View Full Resume",
     "openInNewTab": "Open in New Tab"
   },
@@ -83,7 +93,7 @@
     "byMonth": "By Month",
     "year": "Year",
     "camera": "Camera",
-    "tags": "Tags",
+    "tagsLabel": "Tags",
     "albums": "Albums",
     "noAlbums": "No albums yet",
     "albumNotFound": "Album Not Found",
@@ -120,7 +130,7 @@
   "profile": {
     "location": "Shanghai, China",
     "description": "IT Support Technician & Software Engineer",
-    "summary": "I'm a passionate software engineer focused on building great user experiences and high-quality code. I love exploring new technologies, solving complex problems, and collaborating with teams to create valuable products."
+    "summary": "I'm William Wen, an IT Support Technician at Tesla Shanghai. Most days I help with devices, accounts, and workplace IT. On the side I build automations and small tools with Power Automate, React, and Python so the team spends less time on repetitive work. Lately I've been trying Dify and LLMs to bring AI into everyday IT workflows. Outside work, I take photos and tinker with HomeKit and old-device DIY."
   },
   "workExperience": {
     "tesla": {
@@ -128,7 +138,7 @@
       "title": "IT Support Technician",
       "location": "Shanghai",
       "start": "Apr 2022",
-      "description": "Responsible for core product architecture and development, building high-performance web applications using React, TypeScript, and Node.js. Optimized system performance, improving page load speed by 50%."
+      "description": "• Provide enterprise IT support for ~1,500 internal users across endpoints, accounts, workplace apps, and core IT services, with collaboration across APAC.\n• Work with IT and business teams to tighten support workflows and improve response quality.\n• Design and maintain 300+ Power Automate workflows, cutting repetitive work and saving ~50 hours of manual effort each month.\n• Build internal tools and lightweight apps with React and Python for IT and business users.\n• Explore Dify and LLMs for enterprise IT use cases such as knowledge assistance and workflow support."
     },
     "dalian": {
       "company": "Dalian Shengjie International Freight Forwarding Co., Ltd.",
