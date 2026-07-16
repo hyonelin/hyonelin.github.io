@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import { BlurFade } from '@/components/BlurFade'
 import { Navbar } from '@/components/Navbar'
 import { PhotoModal } from '@/components/PhotoModal'
-import { ArrowLeft, MapPin, X, Camera, Calendar, Tag, Loader2, FolderOpen } from 'lucide-react'
+import { PhotoMasonry } from '@/components/PhotoMasonry'
+import { ArrowLeft, X, Camera, Calendar, Tag, Loader2, FolderOpen } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getImageUrl, R2_BASE_URL, PHOTO_CONFIG, type PhotoMetadata, type PhotoIndex, type PhotoAlbum } from '@/lib/photos'
 import { usePageTitle } from '@/hooks/usePageTitle'
@@ -66,7 +67,11 @@ export function Photography() {
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         )
         setAllPhotos(sorted)
-        setAlbums(albumData.albums || [])
+        setAlbums(
+          [...(albumData.albums || [])].sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+          )
+        )
         setLoading(false)
       })
       .catch((err) => {
@@ -129,28 +134,35 @@ export function Photography() {
   const hasNextPage = page < totalPages
   const totalCount = filteredPhotos.length
 
-  // 按年份分组（倒序）
+  // 当前可见照片（分页），按日期新 → 旧
+  const visiblePhotos = useMemo(() => {
+    return filteredPhotos
+      .slice()
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, page * PHOTO_CONFIG.PAGE_SIZE)
+  }, [filteredPhotos, page])
+
+  // 按年份分组（年份新 → 旧；组内日期新 → 旧）
   const groupedPhotosByYear = useMemo(() => {
     const groups: Record<string, PhotoMetadata[]> = {}
-    
-    filteredPhotos.forEach((photo) => {
+
+    visiblePhotos.forEach((photo) => {
       const year = new Date(photo.date).getFullYear().toString()
       if (!groups[year]) {
         groups[year] = []
       }
       groups[year].push(photo)
     })
-    
-    // 按年份降序排序
+
     const sortedYears = Object.keys(groups).sort((a, b) => parseInt(b) - parseInt(a))
-    const sortedGroups: Record<string, PhotoMetadata[]> = {}
-    
-    sortedYears.forEach((year) => {
-      sortedGroups[year] = groups[year]
-    })
-    
-    return sortedGroups
-  }, [filteredPhotos])
+
+    return sortedYears.map((year) => ({
+      year,
+      photos: groups[year].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      ),
+    }))
+  }, [visiblePhotos])
 
   // 加载更多
   const loadMore = useCallback(() => {
@@ -488,52 +500,41 @@ export function Photography() {
               {t('photography.noPhotos')}
             </div>
           ) : (
-            /* 按年份分组显示 */
-            Object.entries(groupedPhotosByYear).map(([year, yearPhotos], yearIndex) => (
-              <div key={year} className="mb-16">
-                {/* 年份标题 */}
-                <BlurFade delay={0.1 + yearIndex * 0.05}>
-                  <h2 className="mb-6 text-2xl font-bold flex items-center gap-3">
-                    <Calendar className="h-6 w-6" />
-                    {year}
-                    <span className="text-sm font-normal text-muted-foreground">
-                      {yearPhotos.length} {t('photography.photos')}
-                    </span>
-                  </h2>
-                </BlurFade>
-                
-                {/* 瀑布流布局 */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {yearPhotos.map((photo) => (
-                    <div key={photo.path} className="break-inside-avoid">
-                      <div
-                        className="group relative cursor-pointer overflow-hidden rounded-lg border bg-card transition-all hover:shadow-lg"
-                        onClick={() => setSelectedPhoto(photo)}
-                      >
-                        <LazyImage
-                          src={getImageUrl(photo.path)}
-                          alt={photo.title || photo.path}
-                          className="w-full transition-transform duration-300 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity group-hover:opacity-100">
-                          <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                            {photo.title && (
-                              <h3 className="text-sm font-semibold">{photo.title}</h3>
-                            )}
-                            {photo.location && (
-                              <div className="mt-1 flex items-center gap-1 text-xs">
-                                <MapPin className="h-3 w-3" />
-                                {photo.location}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+            <>
+              {groupedPhotosByYear.map(({ year, photos: yearPhotos }, yearIndex) => (
+                <div key={year} className="mb-16">
+                  <BlurFade delay={0.1 + yearIndex * 0.05}>
+                    <h2 className="mb-6 flex items-center gap-3 text-2xl font-bold">
+                      <Calendar className="h-6 w-6" />
+                      {year}
+                      <span className="text-sm font-normal text-muted-foreground">
+                        {yearPhotos.length} {t('photography.photos')}
+                      </span>
+                    </h2>
+                  </BlurFade>
+
+                  <PhotoMasonry
+                    photos={yearPhotos}
+                    onSelect={setSelectedPhoto}
+                  />
                 </div>
+              ))}
+
+              <div ref={loadMoreRef} className="flex justify-center py-8">
+                {hasNextPage ? (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>{t('photography.loadingMore')}</span>
+                  </div>
+                ) : (
+                  visiblePhotos.length > 0 && (
+                    <span className="text-sm text-muted-foreground">
+                      {t('photography.noMorePhotos')}
+                    </span>
+                  )
+                )}
               </div>
-            ))
+            </>
           )}
         </div>
       </div>
@@ -541,64 +542,5 @@ export function Photography() {
       <PhotoModal photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
       <Navbar />
     </main>
-  )
-}
-
-// 懒加载图片组件
-interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
-  src: string
-}
-
-function LazyImage({ src, alt, className, ...props }: LazyImageProps) {
-  const [isLoaded, setIsLoaded] = useState(false)
-  const [isInView, setIsInView] = useState(false)
-  const [hasError, setHasError] = useState(false)
-  const imgRef = useRef<HTMLImageElement>(null)
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsInView(true)
-          observer.disconnect()
-        }
-      },
-      { rootMargin: '200px' }
-    )
-
-    if (imgRef.current) {
-      observer.observe(imgRef.current)
-    }
-
-    return () => observer.disconnect()
-  }, [])
-
-  return (
-    <div className="relative min-h-[200px]">
-      {!isLoaded && !hasError && (
-        <div className="absolute inset-0 animate-pulse bg-muted rounded-lg" />
-      )}
-      <img
-        ref={imgRef}
-        src={isInView ? src : undefined}
-        alt={alt}
-        className={`${className || ''} transition-opacity duration-300 ${
-          isLoaded ? 'opacity-100' : 'opacity-0'
-        }`}
-        loading="lazy"
-        onLoad={() => setIsLoaded(true)}
-        onError={() => {
-          setHasError(true)
-          setIsLoaded(true)
-        }}
-        {...props}
-      />
-      {hasError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted rounded-lg gap-2">
-          <Camera className="h-8 w-8 text-muted-foreground/50" />
-          <span className="text-xs text-muted-foreground">图片加载失败</span>
-        </div>
-      )}
-    </div>
   )
 }
