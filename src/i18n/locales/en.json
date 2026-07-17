@@ -26,15 +26,15 @@
     "title": "Education"
   },
   "projects": {
-    "title": "Things I've been building",
-    "description": "A few work tools and side projects — nothing fancy.",
+    "title": "Work & projects",
+    "description": "Internal tools from work, plus a few personal projects.",
     "website": "Website",
     "thisSite": "This page",
     "source": "Source",
     "blog": "Blog",
     "internal": "Internal",
     "problem": "Problem",
-    "solution": "What I did",
+    "solution": "Approach",
     "impact": "Result",
     "category": {
       "open": "Open",
@@ -43,15 +43,15 @@
     }
   },
   "quickLinks": {
-    "title": "Other pages",
-    "description": "Resume has more detail. Photos and blog live elsewhere.",
-    "resumeHint": "Work & school",
+    "title": "More",
+    "description": "Full experience is on the resume; photography and blog are separate pages.",
+    "resumeHint": "Experience & education",
     "photoHint": "Photos & albums",
-    "blogHint": "DIY notes"
+    "blogHint": "Practice notes"
   },
   "contact": {
     "title": "Contact",
-    "description": "Email or WeChat is fine."
+    "description": "Feel free to reach out by email or WeChat."
   },
   "blog": {
     "title": "Blog",
@@ -148,7 +148,7 @@
   "profile": {
     "location": "Shanghai, China",
     "description": "IT Support Technician & Software Engineer",
-    "summary": "I do IT support at Tesla Shanghai — devices, accounts, the usual workplace stuff. On the side I write Power Automate flows and small React / Python tools so the team repeats itself less. Lately I've been poking at Dify. Outside work I take photos and turn old gadgets into smart-home experiments."
+    "summary": "I'm an IT Support Technician at Tesla Shanghai, focused on endpoints, accounts, and workplace IT. I also build automation and small tools with Power Automate, React, and Python for the team and business users. Recently I've been exploring Dify and LLMs for everyday IT scenarios. Outside work, I enjoy photography and HomeKit / old-device DIY projects."
   },
   "workExperience": {
     "tesla": {
@@ -156,7 +156,7 @@
       "title": "IT Support Technician",
       "location": "Shanghai",
       "start": "Apr 2022",
-      "description": "• IT support for ~1,500 people — devices, accounts, apps, basic services; sometimes work with APAC too.\n• Clean up support workflows with IT and business so the same issues don't keep coming back.\n• Built 300+ Power Automate flows; saves roughly 50 hours a month.\n• Write small React / Python tools for the support team and business users.\n• Trying Dify and LLMs for knowledge answers and workflow hints — still early."
+      "description": "• Provide IT support for ~1,500 internal users across endpoints, accounts, workplace apps, and core services, with collaboration across APAC.\n• Work with IT and business teams to improve support workflows and reduce recurring issues.\n• Design and maintain 300+ Power Automate workflows, saving about 50 hours of manual effort each month.\n• Build internal tools with React / Python for IT support and business users.\n• Explore Dify and LLMs for knowledge Q&A and workflow assistance in IT scenarios."
     },
     "dalian": {
       "company": "Dalian Shengjie International Freight Forwarding Co., Ltd.",
@@ -197,26 +197,26 @@
   },
   "projectInfo": {
     "website": {
-      "title": "This site",
-      "description": "The page you're looking at. I built it myself — profile, blog, and photos. Images sit on R2; I keep tweaking it when I have time."
+      "title": "Personal site (this page)",
+      "description": "The website you're viewing now. Built with React — profile, blog, and photography. Images are hosted on Cloudflare R2, and the site is still being iterated."
     },
     "automation": {
-      "title": "IT automation & small tools",
-      "description": "Support work had too many repeat steps, so I killed them with Power Automate and a bit of React / Python.",
-      "problem": "A lot of tickets were the same steps over and over.",
-      "solution": "Power Automate for the flows; React / Python when a tiny tool was missing.",
-      "impact": "Roughly 300+ flows running, about 50 hours saved a month, covering ~1,500 people."
+      "title": "IT automation & internal tools",
+      "description": "Built Power Automate workflows and React / Python tools to reduce repetitive work in day-to-day IT support.",
+      "problem": "Many support requests repeated the same manual steps and took too much time.",
+      "solution": "Used Power Automate for workflows, and React / Python for lightweight tools where needed.",
+      "impact": "300+ workflows in use, saving about 50 hours per month across ~1,500 users."
     },
     "aiAssistant": {
-      "title": "AI helper for IT",
-      "description": "Trying Dify and LLMs so I answer fewer of the same questions.",
-      "problem": "Same questions, every week. Digging through docs was slow.",
-      "solution": "Hooked LLMs up through Dify, starting with Q&A and simple workflow tips.",
-      "impact": "Still building it. Once it works, I'll push it further into support."
+      "title": "AI assistant for IT support",
+      "description": "Exploring Dify and LLMs for knowledge Q&A and workflow assistance in IT support scenarios.",
+      "problem": "Common questions kept recurring, and looking up docs was slow.",
+      "solution": "Connected LLMs through Dify, starting with knowledge Q&A and workflow guidance.",
+      "impact": "In progress, with the goal of shortening time spent on common requests."
     },
     "homekit": {
-      "title": "Old-device DIY",
-      "description": "Gave spare gear a second life — old iPad as a speaker control panel, old phones as HomeKit cameras. Notes are on the blog."
+      "title": "HomeKit & device DIY",
+      "description": "Smart-home experiments with spare devices: an old iPad as a speaker control panel, and old phones as HomeKit cameras, documented on the blog."
     }
   }
 }
