@@ -26,15 +26,16 @@
     "title": "Education"
   },
   "projects": {
-    "title": "Selected Work",
-    "description": "A short mix of personal work, internal tooling, AI experiments, and hobby builds.",
+    "title": "Things I've been building",
+    "description": "A few work tools and side projects — nothing fancy.",
     "website": "Website",
+    "thisSite": "This page",
     "source": "Source",
     "blog": "Blog",
     "internal": "Internal",
     "problem": "Problem",
-    "solution": "Solution",
-    "impact": "Impact",
+    "solution": "What I did",
+    "impact": "Result",
     "category": {
       "open": "Open",
       "work": "Work",
@@ -42,15 +43,15 @@
     }
   },
   "quickLinks": {
-    "title": "Explore more",
-    "description": "Resume for the details; photography and blog for everything else.",
-    "resumeHint": "Experience & education",
-    "photoHint": "Albums & filters",
-    "blogHint": "Notes & DIY posts"
+    "title": "Other pages",
+    "description": "Resume has more detail. Photos and blog live elsewhere.",
+    "resumeHint": "Work & school",
+    "photoHint": "Photos & albums",
+    "blogHint": "DIY notes"
   },
   "contact": {
-    "title": "Contact Me",
-    "description": "Want to talk tech, photography, or collaboration? Email or WeChat works."
+    "title": "Contact",
+    "description": "Email or WeChat is fine."
   },
   "blog": {
     "title": "Blog",
@@ -147,7 +148,7 @@
   "profile": {
     "location": "Shanghai, China",
     "description": "IT Support Technician & Software Engineer",
-    "summary": "I'm William Wen, an IT Support Technician at Tesla Shanghai. Most days I help with devices, accounts, and workplace IT. On the side I build automations and small tools with Power Automate, React, and Python so the team spends less time on repetitive work. Lately I've been trying Dify and LLMs to bring AI into everyday IT workflows. Outside work, I take photos and tinker with HomeKit and old-device DIY."
+    "summary": "I do IT support at Tesla Shanghai — devices, accounts, the usual workplace stuff. On the side I write Power Automate flows and small React / Python tools so the team repeats itself less. Lately I've been poking at Dify. Outside work I take photos and turn old gadgets into smart-home experiments."
   },
   "workExperience": {
     "tesla": {
@@ -155,7 +156,7 @@
       "title": "IT Support Technician",
       "location": "Shanghai",
       "start": "Apr 2022",
-      "description": "• Provide enterprise IT support for ~1,500 internal users across endpoints, accounts, workplace apps, and core IT services, with collaboration across APAC.\n• Work with IT and business teams to tighten support workflows and improve response quality.\n• Design and maintain 300+ Power Automate workflows, cutting repetitive work and saving ~50 hours of manual effort each month.\n• Build internal tools and lightweight apps with React and Python for IT and business users.\n• Explore Dify and LLMs for enterprise IT use cases such as knowledge assistance and workflow support."
+      "description": "• IT support for ~1,500 people — devices, accounts, apps, basic services; sometimes work with APAC too.\n• Clean up support workflows with IT and business so the same issues don't keep coming back.\n• Built 300+ Power Automate flows; saves roughly 50 hours a month.\n• Write small React / Python tools for the support team and business users.\n• Trying Dify and LLMs for knowledge answers and workflow hints — still early."
     },
     "dalian": {
       "company": "Dalian Shengjie International Freight Forwarding Co., Ltd.",
@@ -196,26 +197,26 @@
   },
   "projectInfo": {
     "website": {
-      "title": "Personal Website & Photography",
-      "description": "A React + TypeScript site for my profile, blog, and photography. Photos live on Cloudflare R2; I'm still tuning performance and UX."
+      "title": "This site",
+      "description": "The page you're looking at. I built it myself — profile, blog, and photos. Images sit on R2; I keep tweaking it when I have time."
     },
     "automation": {
-      "title": "Enterprise IT Automation & Tools",
-      "description": "Automating repetitive IT work with Power Automate plus lightweight React / Python tools.",
-      "problem": "Too much time went into repetitive support operations.",
-      "solution": "Built Power Automate workflows and small React / Python tools for recurring tasks.",
-      "impact": "300+ workflows in use, ~50 hours of manual effort saved each month, supporting ~1,500 internal users."
+      "title": "IT automation & small tools",
+      "description": "Support work had too many repeat steps, so I killed them with Power Automate and a bit of React / Python.",
+      "problem": "A lot of tickets were the same steps over and over.",
+      "solution": "Power Automate for the flows; React / Python when a tiny tool was missing.",
+      "impact": "Roughly 300+ flows running, about 50 hours saved a month, covering ~1,500 people."
     },
     "aiAssistant": {
-      "title": "AI-powered IT Assistant",
-      "description": "Using Dify and LLMs to bring knowledge search and workflow help into everyday IT support.",
-      "problem": "The same questions kept coming back, and looking things up was still slow.",
-      "solution": "Exploring Dify and LLMs for knowledge assistance, workflow guidance, and internal tools.",
-      "impact": "Still rolling out — aimed at finishing common requests faster."
+      "title": "AI helper for IT",
+      "description": "Trying Dify and LLMs so I answer fewer of the same questions.",
+      "problem": "Same questions, every week. Digging through docs was slow.",
+      "solution": "Hooked LLMs up through Dify, starting with Q&A and simple workflow tips.",
+      "impact": "Still building it. Once it works, I'll push it further into support."
     },
     "homekit": {
-      "title": "HomeKit & Hardware Projects",
-      "description": "Repurposing unused devices: an old iPad as a speaker control panel, and legacy phones as HomeKit cameras — with write-ups on the blog."
+      "title": "Old-device DIY",
+      "description": "Gave spare gear a second life — old iPad as a speaker control panel, old phones as HomeKit cameras. Notes are on the blog."
     }
   }
 }

@@ -16,6 +16,8 @@ function linkLabel(
   switch (type) {
     case 'website':
       return t('projects.website')
+    case 'current':
+      return t('projects.thisSite')
     case 'source':
       return t('projects.source')
     case 'blog':

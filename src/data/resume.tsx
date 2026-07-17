@@ -127,7 +127,7 @@ export const DATA = {
   projects: [
     {
       titleKey: "projectInfo.website.title",
-      href: "https://hyonelin.github.io",
+      href: "/",
       descriptionKey: "projectInfo.website.description",
       categoryKey: "projects.category.open",
       technologies: [
@@ -138,7 +138,7 @@ export const DATA = {
         "Cloudflare R2",
         "GitHub Pages",
       ],
-      links: [{ type: "website", href: "https://hyonelin.github.io" }],
+      links: [{ type: "current", href: "/" }],
     },
     {
       titleKey: "projectInfo.automation.title",

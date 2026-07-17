@@ -1,7 +1,7 @@
 import { Badge } from './Badge'
 import { ExternalLink, Github, BookOpen, Lock } from 'lucide-react'
 
-export type ProjectLinkType = 'website' | 'source' | 'blog' | 'internal'
+export type ProjectLinkType = 'website' | 'source' | 'blog' | 'internal' | 'current'
 
 interface ProjectCardProps {
   title: string
