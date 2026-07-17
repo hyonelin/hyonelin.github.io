@@ -119,19 +119,31 @@ wrangler r2 object put photos/photos/albums.json --file=public/photos/albums.jso
 
 ## 第六步：部署 Worker
 
+### 方式 A：本机命令行
+
 ```bash
 # 在 worker 目录下
 wrangler deploy
 ```
 
-部署成功后，你会看到类似这样的输出：
+### 方式 B：手机 / 无电脑（GitHub Actions）
+
+仓库已包含 `.github/workflows/deploy-worker.yml`。推送到 `main`（或手动 Run workflow）即可部署。
+
+1. 手机打开 Cloudflare → My Profile → API Tokens  
+   创建 Token，权限至少包含：`Account - Cloudflare Workers - Edit`，以及 R2 如需一并管理
+2. 手机打开 GitHub 仓库 → **Settings → Secrets and variables → Actions**  
+   新增：
+   - `CLOUDFLARE_API_TOKEN` = 上一步的 Token
+   - `CLOUDFLARE_ACCOUNT_ID` = Cloudflare Dashboard 右侧 Account ID
+3. 把包含 Worker 改动的 PR **合并进 main**，或到 **Actions → Deploy Cloudflare Worker → Run workflow**
+4. 等绿色勾，再到 Admin 文章页确认不再提示「博客接口不可用」
+
+部署成功后地址一般为：
 
 ```
-✨ Success! Uploaded photo-admin (1.23 sec)
-   https://photo-admin.你的子域名.workers.dev
+https://photo-admin.<你的子域名>.workers.dev
 ```
-
-**复制这个 URL！** 这是你 Worker 的地址。
 
 ---
 
