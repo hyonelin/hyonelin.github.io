@@ -15,6 +15,7 @@ import { WORKER_URL, authHeaders } from '@/lib/adminApi'
 import {
   type BlogIndexItem,
   type BlogLang,
+  checkBlogApiAvailable,
   fetchBlogIndex,
   fetchBlogMarkdown,
   parseMarkdownFrontmatter,
@@ -53,6 +54,7 @@ export function AdminPosts({ password }: AdminPostsProps) {
   const [uploadingImage, setUploadingImage] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [apiWarning, setApiWarning] = useState('')
   const [editor, setEditor] = useState<EditorState | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -61,6 +63,13 @@ export function AdminPosts({ password }: AdminPostsProps) {
     setLoading(true)
     setError('')
     try {
+      const health = await checkBlogApiAvailable(WORKER_URL)
+      if (!health.ok) {
+        setApiWarning(health.message)
+        setPosts([])
+        return
+      }
+      setApiWarning('')
       const response = await fetch(`${WORKER_URL}/api/blogs?lang=${lang}`)
       const data = await response.json()
       const remote: BlogIndexItem[] = data.posts || []
@@ -239,24 +248,40 @@ export function AdminPosts({ password }: AdminPostsProps) {
     setError('')
     setMessage('')
     try {
-      const localPosts = await fetchBlogIndex(lang)
-      if (localPosts.length === 0) {
+      const health = await checkBlogApiAvailable(WORKER_URL)
+      if (!health.ok) {
+        setError(health.message)
+        setApiWarning(health.message)
+        return
+      }
+
+      // Prefer local public/blogs for import source (not R2)
+      const localRes = await fetch(`/blogs/${lang}/index.json`)
+      if (!localRes.ok) {
+        setError('读不到本地文章列表 /blogs/.../index.json')
+        return
+      }
+      const localPosts = (await localRes.json()) as BlogIndexItem[]
+      if (!Array.isArray(localPosts) || localPosts.length === 0) {
         setMessage('本地没有可导入的文章')
         return
       }
 
       let imported = 0
+      const failures: string[] = []
+
       for (const post of localPosts) {
         try {
-          const markdown = await fetchBlogMarkdown(lang, post.slug)
+          const markdown = await fetchBlogMarkdown(lang, post.slug, { localOnly: true })
           const parsed = parseMarkdownFrontmatter(markdown)
+          const headingMatch = parsed.content.match(/^#\s+(.+)$/m)
           const response = await fetch(`${WORKER_URL}/api/blogs/post`, {
             method: 'PUT',
             headers: authHeaders(password, true),
             body: JSON.stringify({
               lang,
               slug: post.slug,
-              title: parsed.meta.title || post.title,
+              title: parsed.meta.title || post.title || headingMatch?.[1] || post.slug,
               date: parsed.meta.date || post.date,
               description: parsed.meta.description || post.description || '',
               tags: parsed.meta.tags || post.tags || [],
@@ -264,12 +289,28 @@ export function AdminPosts({ password }: AdminPostsProps) {
               content: parsed.content,
             }),
           })
-          if (response.ok) imported += 1
-        } catch {
-          // continue other posts
+          if (response.ok) {
+            imported += 1
+          } else {
+            const data = await response.json().catch(() => ({}))
+            failures.push(
+              `${post.slug}: ${data.error || `HTTP ${response.status}`}`
+            )
+          }
+        } catch (err) {
+          failures.push(
+            `${post.slug}: ${err instanceof Error ? err.message : '未知错误'}`
+          )
         }
       }
-      setMessage(`已导入 ${imported} / ${localPosts.length} 篇文章到 R2`)
+
+      if (imported === 0 && failures.length > 0) {
+        setError(`导入失败（0 / ${localPosts.length}）。${failures[0]}`)
+      } else if (failures.length > 0) {
+        setMessage(`已导入 ${imported} / ${localPosts.length}。部分失败：${failures[0]}`)
+      } else {
+        setMessage(`已导入 ${imported} / ${localPosts.length} 篇文章到 R2`)
+      }
       await loadPosts()
     } catch {
       setError('导入失败')
@@ -469,9 +510,19 @@ export function AdminPosts({ password }: AdminPostsProps) {
       )}
 
       <div className="rounded-lg border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-        首次使用可点「从站点导入」，把现有 `public/blogs` 文章同步到 R2。之后在这里改的内容会优先被前台读取。
-        若接口 404，需要重新部署 Worker。
+        首次使用：先在本机执行 <code className="rounded bg-background px-1">cd worker && wrangler deploy</code>
+        ，再点「从站点导入」把现有文章同步到 R2。之后在这里编辑会优先被前台读取。
       </div>
+
+      {apiWarning && (
+        <div className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-200">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <div>
+            <div className="font-medium">博客接口不可用</div>
+            <p className="mt-1 text-xs opacity-90">{apiWarning}</p>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center gap-2 py-8 text-muted-foreground">

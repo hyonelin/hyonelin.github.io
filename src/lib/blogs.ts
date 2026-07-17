@@ -22,9 +22,10 @@ export function getBlogIndexUrl(lang: BlogLang, source: 'r2' | 'local' = 'r2'): 
 }
 
 export function getBlogPostUrl(lang: BlogLang, slug: string, source: 'r2' | 'local' = 'r2'): string {
+  const encoded = encodeURIComponent(slug).replace(/%2F/g, '/')
   return source === 'r2'
-    ? `${R2_BASE_URL}/blogs/${lang}/${slug}.md`
-    : `/blogs/${lang}/${slug}.md`
+    ? `${R2_BASE_URL}/blogs/${lang}/${encoded}.md`
+    : `/blogs/${lang}/${encoded}.md`
 }
 
 /** Prefer R2, fall back to local public/blogs */
@@ -53,16 +54,55 @@ async function fetchLocalIndex(lang: BlogLang): Promise<BlogIndexItem[]> {
   return Array.isArray(data) ? data : []
 }
 
-export async function fetchBlogMarkdown(lang: BlogLang, slug: string): Promise<string> {
-  try {
-    const r2Res = await fetch(getBlogPostUrl(lang, slug, 'r2'))
-    if (r2Res.ok) return r2Res.text()
-  } catch {
-    // fall through
+export async function fetchBlogMarkdown(
+  lang: BlogLang,
+  slug: string,
+  options?: { localOnly?: boolean }
+): Promise<string> {
+  if (!options?.localOnly) {
+    try {
+      const r2Res = await fetch(getBlogPostUrl(lang, slug, 'r2'))
+      if (r2Res.ok) return r2Res.text()
+    } catch {
+      // fall through
+    }
   }
+
   const localRes = await fetch(getBlogPostUrl(lang, slug, 'local'))
-  if (!localRes.ok) throw new Error('Not found')
+  if (!localRes.ok) throw new Error(`本地文章不存在：${slug}`)
   return localRes.text()
+}
+
+/** Check whether the deployed Worker includes blog APIs */
+export async function checkBlogApiAvailable(workerUrl: string): Promise<{
+  ok: boolean
+  status: number
+  message: string
+}> {
+  try {
+    const res = await fetch(`${workerUrl}/api/blogs?lang=cn`)
+    if (res.status === 404) {
+      return {
+        ok: false,
+        status: 404,
+        message: 'Worker 尚未包含博客接口。请在本机 worker 目录执行：wrangler deploy',
+      }
+    }
+    if (!res.ok) {
+      return {
+        ok: false,
+        status: res.status,
+        message: `Worker 博客接口异常（HTTP ${res.status}）`,
+      }
+    }
+    return { ok: true, status: res.status, message: '博客接口可用' }
+  } catch {
+    return {
+      ok: false,
+      status: 0,
+      message: '无法连接 Worker，请检查网络或 WORKER_URL',
+    }
+  }
 }
 
 export function parseMarkdownFrontmatter(text: string): {
