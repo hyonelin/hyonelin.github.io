@@ -16,20 +16,25 @@ function getColumnCount(width: number): number {
 }
 
 /**
- * Left-packed column masonry:
- * - First row tops stay aligned (`items-start` columns)
- * - Few photos pack to the left (no middle gaps from CSS column balancing)
- * - Variable image heights create the waterfall bottoms
+ * Fixed-width column masonry, left-packed.
+ * - Column width is always based on the viewport max columns (consistent card width)
+ * - When photos < columns, unused space stays on the right (no stretching)
+ * - Tops stay aligned; bottoms form a waterfall by natural image height
  */
 export function PhotoMasonry({ photos, onSelect, gap = 16 }: PhotoMasonryProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [viewportColumns, setViewportColumns] = useState(1)
+  const [containerWidth, setContainerWidth] = useState(0)
 
   useEffect(() => {
     const node = containerRef.current
     if (!node) return
 
-    const update = () => setViewportColumns(getColumnCount(node.clientWidth))
+    const update = () => {
+      const width = node.clientWidth
+      setContainerWidth(width)
+      setViewportColumns(getColumnCount(width))
+    }
     update()
 
     const observer = new ResizeObserver(update)
@@ -37,22 +42,27 @@ export function PhotoMasonry({ photos, onSelect, gap = 16 }: PhotoMasonryProps) 
     return () => observer.disconnect()
   }, [])
 
-  // Don't reserve empty columns when there aren't enough photos
-  const columnCount = Math.max(1, Math.min(viewportColumns, photos.length || 1))
+  // How many columns we actually fill (never more than photos)
+  const usedColumns = Math.max(1, Math.min(viewportColumns, photos.length || 1))
+
+  const columnWidth = useMemo(() => {
+    if (containerWidth <= 0 || viewportColumns <= 0) return undefined
+    const totalGap = gap * (viewportColumns - 1)
+    return (containerWidth - totalGap) / viewportColumns
+  }, [containerWidth, viewportColumns, gap])
 
   const columns = useMemo(() => {
-    const cols: PhotoMetadata[][] = Array.from({ length: columnCount }, () => [])
-    const colHeights = Array(columnCount).fill(0)
+    const cols: PhotoMetadata[][] = Array.from({ length: usedColumns }, () => [])
+    const colHeights = Array(usedColumns).fill(0)
 
     photos.forEach((photo) => {
       let target = 0
-      for (let i = 1; i < columnCount; i++) {
+      for (let i = 1; i < usedColumns; i++) {
         if (colHeights[i] < colHeights[target]) target = i
       }
 
       cols[target].push(photo)
 
-      // Prefer real aspect ratio when known; otherwise assume a neutral portrait-ish card
       const ratio =
         photo.width && photo.height && photo.width > 0
           ? photo.height / photo.width
@@ -61,19 +71,23 @@ export function PhotoMasonry({ photos, onSelect, gap = 16 }: PhotoMasonryProps) 
     })
 
     return cols
-  }, [photos, columnCount])
+  }, [photos, usedColumns])
 
   return (
     <div
       ref={containerRef}
-      className="flex w-full items-start"
+      className="flex w-full items-start justify-start"
       style={{ gap }}
     >
       {columns.map((column, columnIndex) => (
         <div
           key={columnIndex}
-          className="flex min-w-0 flex-1 flex-col"
-          style={{ gap }}
+          className="flex flex-col"
+          style={{
+            gap,
+            width: columnWidth,
+            flex: '0 0 auto',
+          }}
         >
           {column.map((photo) => (
             <PhotoCard
@@ -167,7 +181,7 @@ function LazyImage({ src, alt, width, height }: LazyImageProps) {
       {!isLoaded && !hasError && (
         <div
           className="w-full animate-pulse bg-muted"
-          style={aspectRatio ? { aspectRatio } : { aspectRatio: '4 / 5' }}
+          style={{ aspectRatio: aspectRatio ?? '4 / 5' }}
         />
       )}
       {isInView && !hasError && (
@@ -191,7 +205,7 @@ function LazyImage({ src, alt, width, height }: LazyImageProps) {
       {hasError && (
         <div
           className="flex w-full flex-col items-center justify-center gap-2 bg-muted"
-          style={aspectRatio ? { aspectRatio } : { aspectRatio: '4 / 5' }}
+          style={{ aspectRatio: aspectRatio ?? '4 / 5' }}
         >
           <Camera className="h-8 w-8 text-muted-foreground/50" />
           <span className="text-xs text-muted-foreground">图片加载失败</span>
