@@ -16,7 +16,6 @@ import {
   type BlogIndexItem,
   type BlogLang,
   checkBlogApiAvailable,
-  fetchBlogIndex,
   fetchBlogMarkdown,
   parseMarkdownFrontmatter,
 } from '@/lib/blogs'
