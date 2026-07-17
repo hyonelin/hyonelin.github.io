@@ -6,27 +6,20 @@ import { Badge } from '@/components/Badge'
 import { ArrowLeft, Calendar } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { usePageTitle } from '@/hooks/usePageTitle'
-
-interface BlogPost {
-  slug: string
-  title: string
-  date: string
-  description: string
-  tags: string[]
-}
+import { blogLangFromI18n, fetchBlogIndex, type BlogIndexItem } from '@/lib/blogs'
 
 export function Blog() {
   const { t, i18n } = useTranslation()
   usePageTitle('pageTitle.blog')
-  const [posts, setPosts] = useState<BlogPost[]>([])
+  const [posts, setPosts] = useState<BlogIndexItem[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedTag, setSelectedTag] = useState<string>('all')
-  const lang = i18n.language === 'zh' ? 'cn' : 'en'
+  const lang = blogLangFromI18n(i18n.language)
 
   useEffect(() => {
-    fetch(`/blogs/${lang}/index.json`)
-      .then((res) => res.json())
-      .then((data: BlogPost[]) => {
+    setLoading(true)
+    fetchBlogIndex(lang)
+      .then((data) => {
         const sorted = [...data].sort(
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         )
@@ -44,10 +37,10 @@ export function Blog() {
     })
   }
 
-  const allTags = ['all', ...new Set(posts.flatMap((p) => p.tags))]
-  const filteredPosts = selectedTag === 'all' 
-    ? posts 
-    : posts.filter((p) => p.tags.includes(selectedTag))
+  const allTags = ['all', ...new Set(posts.flatMap((p) => p.tags || []))]
+  const filteredPosts = selectedTag === 'all'
+    ? posts
+    : posts.filter((p) => (p.tags || []).includes(selectedTag))
 
   return (
     <main className="relative min-h-screen bg-background px-6 py-12 sm:py-24">

@@ -10,9 +10,20 @@
 Admin 页面 (前端) → Cloudflare Worker (后端) → Cloudflare R2 (存储)
 ```
 
-- **Admin 页面**: `/admin` 路由，用于上传照片
-- **Worker**: 处理密码验证、图片上传、JSON 更新
-- **R2**: 存储图片和 JSON 文件
+- **Admin 页面**: `/admin` 路由，含「照片」与「文章」两个模块
+- **Worker**: 密码验证、照片上传、博客 CRUD、文章插图上传
+- **R2**: 存储图片、摄影索引，以及 `blogs/{cn|en}/` 下的文章
+
+### 文章能力（需重新 deploy Worker）
+
+```bash
+cd worker && wrangler deploy
+```
+
+Admin →「文章」可：
+1. 「从站点导入」把现有 `public/blogs` 同步到 R2
+2. 新建/编辑 Markdown
+3. 「插入图片」上传到 R2 并写入 `![](url)`
 
 ---
 

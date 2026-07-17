@@ -8,6 +8,11 @@ import { Badge } from '@/components/Badge'
 import { ArrowLeft, Calendar } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { usePageTitle } from '@/hooks/usePageTitle'
+import {
+  blogLangFromI18n,
+  fetchBlogMarkdown,
+  parseMarkdownFrontmatter,
+} from '@/lib/blogs'
 
 interface PostMeta {
   title: string
@@ -24,49 +29,25 @@ export function BlogPost() {
   const [meta, setMeta] = useState<PostMeta | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
-  const lang = i18n.language === 'zh' ? 'cn' : 'en'
+  const lang = blogLangFromI18n(i18n.language)
 
   useEffect(() => {
     if (!slug) return
 
-    fetch(`/blogs/${lang}/${slug}.md`)
-      .then((res) => {
-        if (!res.ok) throw new Error('Not found')
-        return res.text()
-      })
+    setLoading(true)
+    setError(false)
+
+    fetchBlogMarkdown(lang, slug)
       .then((text) => {
-        const frontmatterRegex = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/
-        const match = text.match(frontmatterRegex)
-
-        if (match) {
-          const frontmatter = match[1]
-          const markdown = match[2]
-
-          const metaObj: Record<string, unknown> = {}
-          frontmatter.split('\n').forEach((line) => {
-            const colonIndex = line.indexOf(':')
-            if (colonIndex > 0) {
-              const key = line.slice(0, colonIndex).trim()
-              let value = line.slice(colonIndex + 1).trim()
-              if (value.startsWith('"') && value.endsWith('"')) {
-                value = value.slice(1, -1)
-              }
-              if (value.startsWith('[') && value.endsWith(']')) {
-                metaObj[key] = value
-                  .slice(1, -1)
-                  .split(',')
-                  .map((s) => s.trim().replace(/"/g, ''))
-              } else {
-                metaObj[key] = value
-              }
-            }
-          })
-
-          setMeta(metaObj as unknown as PostMeta)
-          setContent(markdown)
-        } else {
-          setContent(text)
-        }
+        const parsed = parseMarkdownFrontmatter(text)
+        const headingMatch = parsed.content.match(/^#\s+(.+)$/m)
+        setMeta({
+          title: parsed.meta.title || headingMatch?.[1] || slug,
+          date: parsed.meta.date || '',
+          description: parsed.meta.description || '',
+          tags: parsed.meta.tags || [],
+        })
+        setContent(parsed.content)
         setLoading(false)
       })
       .catch(() => {
