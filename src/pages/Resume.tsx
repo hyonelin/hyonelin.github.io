@@ -9,9 +9,11 @@ import { Contact } from '@/sections/Contact'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Download } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 export function Resume() {
   const { t } = useTranslation()
+  usePageTitle('pageTitle.resume')
 
   return (
     <main className="relative min-h-screen bg-background px-6 py-12 sm:py-24">
@@ -111,7 +113,7 @@ export function Resume() {
             <p className="mt-1 text-muted-foreground">{t('profile.description')}</p>
             <p className="mt-1 text-sm text-muted-foreground">
               {t('profile.location')} • 
-              Email: lin@hyonelin.com
+              Email: wen_xuanlin@outlook.com
             </p>
           </div>
         </div>
@@ -122,7 +124,7 @@ export function Resume() {
           <Skills />
           <Work />
           <Education />
-          <Projects />
+          <Projects variant="detailed" />
           <Contact />
         </div>
 

@@ -11,6 +11,11 @@ export default defineConfig({
   },
   // 使用相对路径
   base: './',
+  server: {
+    host: true,
+    // Allow Cloudflare quick tunnels / other preview hosts
+    allowedHosts: true,
+  },
   build: {
     outDir: 'dist',
     sourcemap: false,

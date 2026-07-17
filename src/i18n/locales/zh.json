@@ -26,14 +26,32 @@
     "title": "教育背景"
   },
   "projects": {
-    "title": "我的项目",
-    "description": "这里是我参与开发的一些项目，涵盖了不同的技术栈和应用场景。",
+    "title": "作品与实践",
+    "description": "工作中的工具建设，以及一些个人项目。",
     "website": "网站",
-    "source": "源码"
+    "thisSite": "当前页面",
+    "source": "源码",
+    "blog": "博客",
+    "internal": "内部项目",
+    "problem": "问题",
+    "solution": "做法",
+    "impact": "结果",
+    "category": {
+      "open": "公开",
+      "work": "工作",
+      "hobby": "兴趣"
+    }
+  },
+  "quickLinks": {
+    "title": "更多内容",
+    "description": "完整经历见简历；摄影与博客在其他页面。",
+    "resumeHint": "经历与教育",
+    "photoHint": "照片与相册",
+    "blogHint": "实践笔记"
   },
   "contact": {
     "title": "联系我",
-    "description": "想要交流或合作？欢迎通过以下方式联系我，我会尽快回复。"
+    "description": "如需联系，欢迎邮件或微信。"
   },
   "blog": {
     "title": "博客",
@@ -52,6 +70,15 @@
     "download": "下载 PDF",
     "printVersion": "打印版本"
   },
+  "pageTitle": {
+    "home": "主页",
+    "resume": "简历",
+    "blog": "博客",
+    "post": "文章",
+    "photography": "摄影",
+    "album": "相册",
+    "admin": "管理"
+  },
   "resumePreview": {
     "title": "简历预览",
     "subtitle": "查看完整的专业简历，适合招聘人员和合作方",
@@ -60,7 +87,7 @@
     "education": "教育背景",
     "skills": "技能亮点",
     "latestExperience": "最新工作经历",
-    "experienceDescription": "负责核心产品的架构设计和开发，使用 React、TypeScript 和 Node.js 构建高性能的 Web 应用",
+    "experienceDescription": "企业 IT 支持，并用 Power Automate、React、Python 做内部提效与自动化",
     "viewFullResume": "查看完整简历",
     "openInNewTab": "新标签页打开"
   },
@@ -84,7 +111,7 @@
     "byMonth": "按月份",
     "year": "年份",
     "camera": "相机",
-    "tags": "标签",
+    "tagsLabel": "标签",
     "albums": "项目相册",
     "noAlbums": "暂无项目相册",
     "albumNotFound": "相册未找到",
@@ -121,7 +148,7 @@
   "profile": {
     "location": "上海, 中国",
     "description": "IT 技术支持工程师 & 软件工程师",
-    "summary": "我是一名充满热情的软件工程师，专注于构建优秀的用户体验和高质量的代码。我喜欢探索新技术，解决复杂问题，并与团队合作创造有价值的产品。"
+    "summary": "我在特斯拉上海担任 IT 技术支持，负责终端、账号与办公环境相关支持。工作中也会使用 Power Automate，以及 React / Python，为团队和业务开发自动化与小工具。近期在尝试将 Dify 与大模型用于日常 IT 场景。业余喜欢摄影，也会做一些 HomeKit 与旧设备改造。"
   },
   "workExperience": {
     "tesla": {
@@ -129,7 +156,7 @@
       "title": "IT 技术支持工程师",
       "location": "上海",
       "start": "2022年4月",
-      "description": "负责核心产品的架构设计和开发，使用 React、TypeScript 和 Node.js 构建高性能的 Web 应用。优化了系统性能，提升了 50% 的页面加载速度。"
+      "description": "• 为约 1,500 名内部用户提供 IT 支持，覆盖终端设备、账号权限、办公软件与基础服务，并参与 APAC 相关协作。\n• 与 IT 团队及业务部门协作，优化支持流程，减少重复问题。\n• 使用 Power Automate 设计并维护 300+ 条自动化流程，每月约节省 50 小时人工。\n• 使用 React / Python 开发内部工具，提升支持与业务侧效率。\n• 探索 Dify 与大模型在知识问答、流程辅助等 IT 场景中的应用。"
     },
     "dalian": {
       "company": "大连盛捷国际货运代理有限公司",
@@ -169,8 +196,27 @@
     }
   },
   "projectInfo": {
-    "underConstruction": "施工中。。。",
-    "comingSoon": "即将为您呈现，烦请您稍后再来~",
-    "dates": "2024年1月 - 至今"
+    "website": {
+      "title": "个人主页（本站）",
+      "description": "你当前浏览的这个网站。基于 React 自行搭建，包含个人介绍、博客与摄影作品；图片托管于 Cloudflare R2，仍在持续迭代。"
+    },
+    "automation": {
+      "title": "IT 自动化与内部工具",
+      "description": "针对日常 IT 支持中的重复操作，使用 Power Automate 与 React / Python 建设自动化流程和内部工具。",
+      "problem": "大量支持请求包含相同的重复步骤，占用较多时间。",
+      "solution": "以 Power Automate 搭建流程，并在需要时用 React / Python 补充轻量工具。",
+      "impact": "维护 300+ 条自动化流程，每月约节省 50 小时，覆盖约 1,500 名用户。"
+    },
+    "aiAssistant": {
+      "title": "IT 场景下的 AI 助手",
+      "description": "基于 Dify 与大模型，探索面向 IT 支持的知识问答与流程辅助能力。",
+      "problem": "常见问题重复出现，查阅文档与指引的成本偏高。",
+      "solution": "通过 Dify 接入大模型，优先落地知识问答与流程提示。",
+      "impact": "项目推进中，目标是缩短常见问题的处理时间。"
+    },
+    "homekit": {
+      "title": "HomeKit 与旧设备改造",
+      "description": "利用闲置设备做智能家居实践：将旧 iPad 改造为音箱控制端，并将旧手机接入 HomeKit 作为监控节点，过程记录于博客。"
+    }
   }
 }
