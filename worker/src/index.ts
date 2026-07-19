@@ -225,6 +225,27 @@ export default {
         return handleAddPhotoToAlbum(request, env)
       }
 
+      // Blog APIs
+      if (path === '/api/blogs' && request.method === 'GET') {
+        return handleListBlogs(request, env)
+      }
+
+      if (path === '/api/blogs/post' && request.method === 'GET') {
+        return handleGetBlogPost(request, env)
+      }
+
+      if (path === '/api/blogs/post' && request.method === 'PUT') {
+        return handlePutBlogPost(request, env)
+      }
+
+      if (path === '/api/blogs/post' && request.method === 'DELETE') {
+        return handleDeleteBlogPost(request, env)
+      }
+
+      if (path === '/api/blogs/upload-image' && request.method === 'POST') {
+        return handleBlogImageUpload(request, env)
+      }
+
       return errorResponse('Not Found', 404)
     } catch (error) {
       console.error('Worker error:', error)
@@ -579,4 +600,194 @@ async function handleAddPhotoToAlbum(request: Request, env: Env): Promise<Respon
   } catch (error) {
     return errorResponse((error as Error).message, 404)
   }
+}
+
+// ---------- Blog ----------
+
+type BlogLang = 'cn' | 'en'
+
+interface BlogIndexItem {
+  slug: string
+  title: string
+  date: string
+  description: string
+  tags: string[]
+  cover?: string
+}
+
+function requireAuth(request: Request, env: Env): Response | null {
+  const authHeader = request.headers.get('Authorization')
+  if (!authHeader || authHeader.replace('Bearer ', '') !== env.ADMIN_PASSWORD) {
+    return errorResponse('Invalid password', 401)
+  }
+  return null
+}
+
+function normalizeLang(lang: string | null): BlogLang {
+  return lang === 'en' ? 'en' : 'cn'
+}
+
+function blogIndexPath(lang: BlogLang): string {
+  return `blogs/${lang}/index.json`
+}
+
+function blogPostPath(lang: BlogLang, slug: string): string {
+  return `blogs/${lang}/${slug}.md`
+}
+
+function slugifyTitle(title: string, date: string): string {
+  const datePrefix = (date || new Date().toISOString().slice(0, 10)).slice(0, 10)
+  const base = title
+    .trim()
+    .toLowerCase()
+    .replace(/[^\w\u4e00-\u9fa5]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60)
+  return `${datePrefix}-${base || 'post'}`
+}
+
+function buildMarkdown(meta: BlogIndexItem, content: string): string {
+  const tags = JSON.stringify(meta.tags || [])
+  return `---
+title: "${meta.title.replace(/"/g, '\\"')}"
+date: "${meta.date}"
+description: "${(meta.description || '').replace(/"/g, '\\"')}"
+tags: ${tags}
+cover: "${meta.cover || ''}"
+---
+
+${content.trim()}\n`
+}
+
+async function readBlogIndex(env: Env, lang: BlogLang): Promise<BlogIndexItem[]> {
+  const object = await env.PHOTOS_BUCKET.get(blogIndexPath(lang))
+  if (!object) return []
+  const data = await object.json() as BlogIndexItem[] | { posts?: BlogIndexItem[] }
+  if (Array.isArray(data)) return data
+  return data.posts || []
+}
+
+async function writeBlogIndex(env: Env, lang: BlogLang, posts: BlogIndexItem[]): Promise<void> {
+  const sorted = [...posts].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  )
+  await env.PHOTOS_BUCKET.put(blogIndexPath(lang), JSON.stringify(sorted, null, 2), {
+    httpMetadata: { contentType: 'application/json' },
+  })
+}
+
+async function handleListBlogs(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url)
+  const lang = normalizeLang(url.searchParams.get('lang'))
+  const posts = await readBlogIndex(env, lang)
+  return jsonResponse({ lang, posts })
+}
+
+async function handleGetBlogPost(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url)
+  const lang = normalizeLang(url.searchParams.get('lang'))
+  const slug = url.searchParams.get('slug')
+  if (!slug) return errorResponse('slug is required')
+
+  const object = await env.PHOTOS_BUCKET.get(blogPostPath(lang, slug))
+  if (!object) return errorResponse('Post not found', 404)
+
+  const markdown = await object.text()
+  const posts = await readBlogIndex(env, lang)
+  const meta = posts.find((p) => p.slug === slug) || null
+
+  return jsonResponse({ lang, slug, meta, markdown })
+}
+
+async function handlePutBlogPost(request: Request, env: Env): Promise<Response> {
+  const authError = requireAuth(request, env)
+  if (authError) return authError
+
+  const body = await request.json() as {
+    lang?: string
+    slug?: string
+    title?: string
+    date?: string
+    description?: string
+    tags?: string[]
+    cover?: string
+    content?: string
+  }
+
+  const lang = normalizeLang(body.lang || null)
+  const title = (body.title || '').trim()
+  const date = (body.date || '').trim()
+  const content = body.content ?? ''
+
+  if (!title || !date) {
+    return errorResponse('title and date are required')
+  }
+
+  const slug = (body.slug || slugifyTitle(title, date)).trim()
+  const meta: BlogIndexItem = {
+    slug,
+    title,
+    date,
+    description: body.description || '',
+    tags: Array.isArray(body.tags) ? body.tags : [],
+    cover: body.cover || '',
+  }
+
+  const markdown = buildMarkdown(meta, content)
+  await env.PHOTOS_BUCKET.put(blogPostPath(lang, slug), markdown, {
+    httpMetadata: { contentType: 'text/markdown; charset=utf-8' },
+  })
+
+  const posts = await readBlogIndex(env, lang)
+  const existingIndex = posts.findIndex((p) => p.slug === slug)
+  if (existingIndex >= 0) {
+    posts[existingIndex] = meta
+  } else {
+    posts.unshift(meta)
+  }
+  await writeBlogIndex(env, lang, posts)
+
+  return jsonResponse({
+    success: true,
+    lang,
+    slug,
+    url: `${env.R2_BASE_URL}/${blogPostPath(lang, slug)}`,
+    meta,
+  })
+}
+
+async function handleDeleteBlogPost(request: Request, env: Env): Promise<Response> {
+  const authError = requireAuth(request, env)
+  if (authError) return authError
+
+  const url = new URL(request.url)
+  const lang = normalizeLang(url.searchParams.get('lang'))
+  const slug = url.searchParams.get('slug')
+  if (!slug) return errorResponse('slug is required')
+
+  await env.PHOTOS_BUCKET.delete(blogPostPath(lang, slug))
+  const posts = (await readBlogIndex(env, lang)).filter((p) => p.slug !== slug)
+  await writeBlogIndex(env, lang, posts)
+
+  return jsonResponse({ success: true })
+}
+
+async function handleBlogImageUpload(request: Request, env: Env): Promise<Response> {
+  const authError = requireAuth(request, env)
+  if (authError) return authError
+
+  const formData = await request.formData()
+  const file = formData.get('file') as File | null
+  if (!file) return errorResponse('No file provided')
+
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
+  const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+  const r2Path = `blogs/assets/${fileName}`
+
+  await env.PHOTOS_BUCKET.put(r2Path, file.stream(), {
+    httpMetadata: { contentType: file.type || 'image/jpeg' },
+  })
+
+  const url = `${env.R2_BASE_URL}/${r2Path}`
+  return jsonResponse({ success: true, path: r2Path, url })
 }

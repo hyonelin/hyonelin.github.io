@@ -104,7 +104,19 @@ export function ResumeCard({
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+              {description.includes('\n') || description.trimStart().startsWith('•') ? (
+                <ul className="mt-2 list-disc space-y-1.5 pl-4 text-sm text-muted-foreground">
+                  {description
+                    .split('\n')
+                    .map((line) => line.replace(/^[•\-*]\s*/, '').trim())
+                    .filter(Boolean)
+                    .map((line) => (
+                      <li key={line}>{line}</li>
+                    ))}
+                </ul>
+              ) : (
+                <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

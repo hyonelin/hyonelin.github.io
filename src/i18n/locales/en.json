@@ -7,6 +7,7 @@
     "projects": "Projects",
     "blog": "Blog",
     "photography": "Photography",
+    "resume": "Resume",
     "contact": "Contact"
   },
   "hero": {
@@ -25,14 +26,32 @@
     "title": "Education"
   },
   "projects": {
-    "title": "My Projects",
-    "description": "Here are some projects I've worked on, covering various tech stacks and use cases.",
+    "title": "Work & projects",
+    "description": "Internal tools from work, plus a few personal projects.",
     "website": "Website",
-    "source": "Source"
+    "thisSite": "This page",
+    "source": "Source",
+    "blog": "Blog",
+    "internal": "Internal",
+    "problem": "Problem",
+    "solution": "Approach",
+    "impact": "Result",
+    "category": {
+      "open": "Open",
+      "work": "Work",
+      "hobby": "Hobby"
+    }
+  },
+  "quickLinks": {
+    "title": "More",
+    "description": "Full experience is on the resume; photography and blog are separate pages.",
+    "resumeHint": "Experience & education",
+    "photoHint": "Photos & albums",
+    "blogHint": "Practice notes"
   },
   "contact": {
-    "title": "Contact Me",
-    "description": "Want to chat or collaborate? Feel free to reach out through any of the following channels."
+    "title": "Contact",
+    "description": "Feel free to reach out by email or WeChat."
   },
   "blog": {
     "title": "Blog",
@@ -51,6 +70,15 @@
     "download": "Download PDF",
     "printVersion": "Print Version"
   },
+  "pageTitle": {
+    "home": "Home",
+    "resume": "Resume",
+    "blog": "Blog",
+    "post": "Post",
+    "photography": "Photos",
+    "album": "Album",
+    "admin": "Admin"
+  },
   "resumePreview": {
     "title": "Resume Preview",
     "subtitle": "View complete professional resume suitable for recruiters and partners",
@@ -59,7 +87,7 @@
     "education": "Education",
     "skills": "Skills",
     "latestExperience": "Latest Experience",
-    "experienceDescription": "Responsible for core product architecture and development, building high-performance web applications using React, TypeScript, and Node.js",
+    "experienceDescription": "Enterprise IT support, plus internal tooling and automation with Power Automate, React, and Python",
     "viewFullResume": "View Full Resume",
     "openInNewTab": "Open in New Tab"
   },
@@ -83,7 +111,7 @@
     "byMonth": "By Month",
     "year": "Year",
     "camera": "Camera",
-    "tags": "Tags",
+    "tagsLabel": "Tags",
     "albums": "Albums",
     "noAlbums": "No albums yet",
     "albumNotFound": "Album Not Found",
@@ -120,7 +148,7 @@
   "profile": {
     "location": "Shanghai, China",
     "description": "IT Support Technician & Software Engineer",
-    "summary": "I'm a passionate software engineer focused on building great user experiences and high-quality code. I love exploring new technologies, solving complex problems, and collaborating with teams to create valuable products."
+    "summary": "I'm an IT Support Technician at Tesla Shanghai, focused on endpoints, accounts, and workplace IT. I also build automation and small tools with Power Automate, React, and Python for the team and business users. Recently I've been exploring Dify and LLMs for everyday IT scenarios. Outside work, I enjoy photography and HomeKit / old-device DIY projects."
   },
   "workExperience": {
     "tesla": {
@@ -128,7 +156,7 @@
       "title": "IT Support Technician",
       "location": "Shanghai",
       "start": "Apr 2022",
-      "description": "Responsible for core product architecture and development, building high-performance web applications using React, TypeScript, and Node.js. Optimized system performance, improving page load speed by 50%."
+      "description": "• Provide IT support for ~1,500 internal users across endpoints, accounts, workplace apps, and core services, with collaboration across APAC.\n• Work with IT and business teams to improve support workflows and reduce recurring issues.\n• Design and maintain 300+ Power Automate workflows, saving about 50 hours of manual effort each month.\n• Build internal tools with React / Python for IT support and business users.\n• Explore Dify and LLMs for knowledge Q&A and workflow assistance in IT scenarios."
     },
     "dalian": {
       "company": "Dalian Shengjie International Freight Forwarding Co., Ltd.",
@@ -168,8 +196,27 @@
     }
   },
   "projectInfo": {
-    "underConstruction": "Under Construction...",
-    "comingSoon": "It will be presented to you shortly, please come back later~",
-    "dates": "Jan 2024 - Present"
+    "website": {
+      "title": "Personal site (this page)",
+      "description": "The website you're viewing now. Built with React — profile, blog, and photography. Images are hosted on Cloudflare R2, and the site is still being iterated."
+    },
+    "automation": {
+      "title": "IT automation & internal tools",
+      "description": "Built Power Automate workflows and React / Python tools to reduce repetitive work in day-to-day IT support.",
+      "problem": "Many support requests repeated the same manual steps and took too much time.",
+      "solution": "Used Power Automate for workflows, and React / Python for lightweight tools where needed.",
+      "impact": "300+ workflows in use, saving about 50 hours per month across ~1,500 users."
+    },
+    "aiAssistant": {
+      "title": "AI assistant for IT support",
+      "description": "Exploring Dify and LLMs for knowledge Q&A and workflow assistance in IT support scenarios.",
+      "problem": "Common questions kept recurring, and looking up docs was slow.",
+      "solution": "Connected LLMs through Dify, starting with knowledge Q&A and workflow guidance.",
+      "impact": "In progress, with the goal of shortening time spent on common requests."
+    },
+    "homekit": {
+      "title": "HomeKit & device DIY",
+      "description": "Smart-home experiments with spare devices: an old iPad as a speaker control panel, and old phones as HomeKit cameras, documented on the blog."
+    }
   }
 }
