@@ -4,13 +4,13 @@ import { usePageTitle } from '@/hooks/usePageTitle'
 const CAR_PHOTO_SRC = '/this-is-my-car.jpg'
 
 export function ThisIsMyCar() {
-  usePageTitle('pageTitle.thisIsMyCar', 'This is my car')
+  usePageTitle('pageTitle.thisIsMyCar', '这我小车车')
 
   return (
     <main className="flex min-h-dvh w-full items-center justify-center bg-white p-0">
       <img
         src={CAR_PHOTO_SRC}
-        alt="This is my car"
+        alt="干嘛! 这我小车车"
         className="block h-auto w-full max-w-full object-contain"
       />
     </main>
