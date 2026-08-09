@@ -6,6 +6,7 @@ import { Photography } from '@/pages/Photography'
 import { PhotoAlbumPage } from '@/pages/PhotoAlbum'
 import { Resume } from '@/pages/Resume'
 import { Admin } from '@/pages/Admin'
+import { ThisIsMyCar } from '@/pages/ThisIsMyCar'
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/photography" element={<Photography />} />
         <Route path="/photography/:albumId" element={<PhotoAlbumPage />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/this-is-my-car" element={<ThisIsMyCar />} />
       </Routes>
     </BrowserRouter>
   )
