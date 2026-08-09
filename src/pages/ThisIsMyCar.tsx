@@ -1,7 +1,7 @@
 import { usePageTitle } from '@/hooks/usePageTitle'
 
-/** Static photo at public/this-is-my-car.jpg — replace the file to update. */
-const CAR_PHOTO_SRC = '/this-is-my-car.jpg'
+/** Static photo at public/IMG_2813.webp — replace the file to update. */
+const CAR_PHOTO_SRC = '/IMG_2813.webp'
 
 export function ThisIsMyCar() {
   usePageTitle('pageTitle.thisIsMyCar', '这我小车车')
