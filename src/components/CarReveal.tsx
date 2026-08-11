@@ -17,12 +17,17 @@ type Phase = 'loading' | 'reveal'
 const CONTACT_HREF = 'tencent://message/?uin=791957992&Site=qq&Menu=yes'
 
 function PoweredByFooter({ dark }: { dark: boolean }) {
+  const muted = dark ? 'text-zinc-500' : 'text-zinc-400'
+  const link = dark
+    ? 'text-zinc-400 underline underline-offset-2 hover:text-zinc-300'
+    : 'text-zinc-500 underline underline-offset-2 hover:text-zinc-700'
+
   return (
-    <p className={`absolute bottom-4 left-0 right-0 text-center text-[11px] ${dark ? 'text-zinc-500' : 'text-zinc-400'}`}>
-      Powered by hyonelin,{' '}
-      <a href={CONTACT_HREF} className={dark ? 'text-zinc-400 underline underline-offset-2 hover:text-zinc-300' : 'text-zinc-500 underline underline-offset-2 hover:text-zinc-700'}>
-        Contact me
-      </a>
+    <p className={`absolute bottom-4 left-0 right-0 px-4 text-center text-[11px] leading-5 ${muted}`}>
+      想要定制？联系QQ：
+      <a href={CONTACT_HREF} className={link}>791957992</a>
+      <br />
+      Powered by hyonelin
     </p>
   )
 }
