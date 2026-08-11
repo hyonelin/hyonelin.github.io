@@ -159,11 +159,26 @@ https://photo-admin.<你的子域名>.workers.dev
 
 4. 点击 **Settings** → **Variables**
 
-5. 添加环境变量：
+5. 添加环境变量 / Secrets：
    - `ADMIN_PASSWORD`: 你的管理密码
    - `R2_BASE_URL`: `https://pub-e00c2328da0440458b54fe471887ca39.r2.dev`
+   - （可选）`ADMIN_TOTP_SECRET`: Base32 密钥，配置后 Admin 登录会启用 6 位两步验证
 
 6. 点击 **Save and deploy**
+
+### 启用两步验证（TOTP）
+
+推荐在 **Admin → 安全** 里前端自助开启：
+
+1. 用密码登录后台
+2. 打开「安全」标签 → 启用两步验证
+3. 用 Google Authenticator / 1Password 扫码
+4. **立刻保存 8 个恢复码**（只显示一次）
+5. 输入验证器 6 位码确认启用
+
+丢失验证器时：登录第二步切换到「恢复码」，使用其中一个一次性恢复码进入；进入后可重新生成恢复码或关闭两步验证。
+
+> 若你曾手动配置过 Cloudflare Secret `ADMIN_TOTP_SECRET`，前端会提示这是 legacy 模式；删除该 Secret 后即可改用前端配置与恢复码。
 
 ---
 

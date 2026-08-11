@@ -4,18 +4,47 @@
  * 功能:
  * 1. 密码验证
  * 2. 登录限流（失败延迟 + IP 锁定 + Turnstile）
- * 3. 图片上传到 R2
- * 4. JSON 更新（index.json 和 albums.json）
+ * 3. 可选 TOTP 两步验证（6 位动态码）
+ * 4. 图片上传到 R2
+ * 5. JSON 更新（index.json 和 albums.json）
  */
+
+import {
+  buildOtpauthUrl,
+  generateRecoveryCodes,
+  generateTotpSecret,
+  hashRecoveryCode,
+  hashRecoveryCodes,
+  verifyTotpCode,
+} from './totp'
 
 export interface Env {
   PHOTOS_BUCKET: R2Bucket
   RATE_LIMIT: KVNamespace
   ADMIN_PASSWORD: string
+  /** Optional legacy bootstrap secret. Prefer frontend-managed KV config. */
+  ADMIN_TOTP_SECRET?: string
   R2_BASE_URL: string
   TURNSTILE_SECRET: string
   TURNSTILE_SITE_KEY: string
 }
+
+interface AdminTotpConfig {
+  enabled: true
+  secret: string
+  recoveryHashes: string[]
+  createdAt: string
+}
+
+interface AdminTotpPending {
+  secret: string
+  recoveryHashes: string[]
+  recoveryCodesPlain?: never
+  createdAt: number
+}
+
+const TOTP_CONFIG_KEY = 'admin_totp:config'
+const TOTP_SETUP_PENDING_KEY = 'admin_totp:setup_pending'
 
 // CORS 头
 const corsHeaders = {
@@ -204,6 +233,30 @@ export default {
       if (path === '/api/verify' && request.method === 'POST') {
         return handleVerify(request, env)
       }
+
+      if (path === '/api/verify-totp' && request.method === 'POST') {
+        return handleVerifyTotp(request, env)
+      }
+
+      if (path === '/api/totp/status' && request.method === 'GET') {
+        return handleTotpStatus(request, env)
+      }
+
+      if (path === '/api/totp/setup' && request.method === 'POST') {
+        return handleTotpSetup(request, env)
+      }
+
+      if (path === '/api/totp/enable' && request.method === 'POST') {
+        return handleTotpEnable(request, env)
+      }
+
+      if (path === '/api/totp/disable' && request.method === 'POST') {
+        return handleTotpDisable(request, env)
+      }
+
+      if (path === '/api/totp/regenerate-recovery' && request.method === 'POST') {
+        return handleTotpRegenerateRecovery(request, env)
+      }
       
       if (path === '/api/upload' && request.method === 'POST') {
         return handleUpload(request, env)
@@ -285,7 +338,7 @@ async function handleGetRateLimit(request: Request, env: Env): Promise<Response>
 }
 
 /**
- * 验证密码
+ * 验证密码（若已启用 TOTP，则进入第二步验证码）
  */
 async function handleVerify(request: Request, env: Env): Promise<Response> {
   const ip = getClientIP(request)
@@ -332,11 +385,267 @@ async function handleVerify(request: Request, env: Env): Promise<Response> {
       delay: getDelay(newState.attempts),
     }, 401)
   }
+
+  // Password OK. If TOTP is enabled, issue a short-lived pending token.
+  if (await isTotpEnabled(env)) {
+    const pendingToken = crypto.randomUUID().replace(/-/g, '')
+    await env.RATE_LIMIT.put(
+      `totp_pending:${pendingToken}`,
+      JSON.stringify({ ip, createdAt: Date.now() }),
+      { expirationTtl: 300 }, // 5 minutes
+    )
+    return jsonResponse({
+      success: true,
+      requireTotp: true,
+      pendingToken,
+      message: 'Password verified, TOTP required',
+    })
+  }
   
   // 成功，清除限流记录
   await updateRateLimitState(env, ip, true)
   
-  return jsonResponse({ success: true, message: 'Verified' })
+  return jsonResponse({ success: true, requireTotp: false, message: 'Verified' })
+}
+
+/**
+ * 第二步：验证 6 位 TOTP，或使用一次性恢复码
+ */
+async function handleVerifyTotp(request: Request, env: Env): Promise<Response> {
+  const config = await getTotpConfig(env)
+  if (!config) {
+    return errorResponse('TOTP is not configured', 400)
+  }
+
+  const ip = getClientIP(request)
+  const state = await getRateLimitState(env, ip)
+  const now = Date.now()
+  if (state.lockedUntil > now) {
+    const remaining = Math.ceil((state.lockedUntil - now) / 1000)
+    return errorResponse(`账户已锁定，请 ${remaining} 秒后重试`, 429)
+  }
+
+  const body = await request.json() as {
+    pendingToken?: string
+    code?: string
+    recoveryCode?: string
+  }
+  const pendingToken = (body.pendingToken || '').trim()
+  const code = (body.code || '').trim()
+  const recoveryCode = (body.recoveryCode || '').trim()
+
+  if (!pendingToken || (!code && !recoveryCode)) {
+    return errorResponse('pendingToken and code/recoveryCode are required', 400)
+  }
+
+  const pendingKey = `totp_pending:${pendingToken}`
+  const pending = await env.RATE_LIMIT.get(pendingKey, 'json') as { ip?: string } | null
+  if (!pending) {
+    return errorResponse('验证已过期，请重新输入密码', 401)
+  }
+
+  let ok = false
+  let usedRecovery = false
+
+  if (recoveryCode) {
+    const hash = await hashRecoveryCode(recoveryCode)
+    const idx = config.recoveryHashes.indexOf(hash)
+    if (idx >= 0) {
+      ok = true
+      usedRecovery = true
+      const nextHashes = [...config.recoveryHashes]
+      nextHashes.splice(idx, 1)
+      await env.RATE_LIMIT.put(TOTP_CONFIG_KEY, JSON.stringify({
+        ...config,
+        recoveryHashes: nextHashes,
+      }))
+    }
+  } else {
+    ok = await verifyTotpCode(config.secret, code, 1)
+  }
+
+  if (!ok) {
+    await updateRateLimitState(env, ip, false)
+    const newState = await getRateLimitState(env, ip)
+    const delay = getDelay(newState.attempts)
+    await new Promise(resolve => setTimeout(resolve, delay))
+    return jsonResponse({
+      success: false,
+      error: recoveryCode ? '恢复码错误或已使用' : '验证码错误',
+      attempts: newState.attempts,
+      requireTurnstile: newState.requireTurnstile,
+      delay: getDelay(newState.attempts),
+    }, 401)
+  }
+
+  await env.RATE_LIMIT.delete(pendingKey)
+  await updateRateLimitState(env, ip, true)
+  return jsonResponse({
+    success: true,
+    message: 'Verified',
+    usedRecovery,
+    recoveryCodesRemaining: usedRecovery
+      ? Math.max(0, config.recoveryHashes.length - 1)
+      : config.recoveryHashes.length,
+  })
+}
+
+async function getTotpConfig(env: Env): Promise<AdminTotpConfig | null> {
+  const fromKv = await env.RATE_LIMIT.get(TOTP_CONFIG_KEY, 'json') as AdminTotpConfig | null
+  if (fromKv?.enabled && fromKv.secret) return fromKv
+
+  // Legacy: env secret still counts as enabled (no recovery codes).
+  if (env.ADMIN_TOTP_SECRET && env.ADMIN_TOTP_SECRET.replace(/\s+/g, '').length >= 16) {
+    return {
+      enabled: true,
+      secret: env.ADMIN_TOTP_SECRET.replace(/\s+/g, ''),
+      recoveryHashes: [],
+      createdAt: '',
+    }
+  }
+  return null
+}
+
+async function isTotpEnabled(env: Env): Promise<boolean> {
+  return Boolean(await getTotpConfig(env))
+}
+
+async function handleTotpStatus(request: Request, env: Env): Promise<Response> {
+  const authError = requireAuth(request, env)
+  if (authError) return authError
+
+  const config = await getTotpConfig(env)
+  return jsonResponse({
+    enabled: Boolean(config),
+    recoveryCodesRemaining: config?.recoveryHashes.length ?? 0,
+    legacyEnvSecret: Boolean(env.ADMIN_TOTP_SECRET) && !(await env.RATE_LIMIT.get(TOTP_CONFIG_KEY)),
+  })
+}
+
+async function handleTotpSetup(request: Request, env: Env): Promise<Response> {
+  const authError = requireAuth(request, env)
+  if (authError) return authError
+
+  if (await env.RATE_LIMIT.get(TOTP_CONFIG_KEY)) {
+    return errorResponse('两步验证已启用，请先关闭后再重新设置', 400)
+  }
+
+  const secret = generateTotpSecret()
+  const recoveryCodes = generateRecoveryCodes(8)
+  const recoveryHashes = await hashRecoveryCodes(recoveryCodes)
+
+  await env.RATE_LIMIT.put(
+    TOTP_SETUP_PENDING_KEY,
+    JSON.stringify({
+      secret,
+      recoveryHashes,
+      createdAt: Date.now(),
+    } satisfies AdminTotpPending),
+    { expirationTtl: 600 },
+  )
+
+  const otpauthUrl = buildOtpauthUrl(secret)
+  return jsonResponse({
+    success: true,
+    secret,
+    otpauthUrl,
+    recoveryCodes,
+    qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(otpauthUrl)}`,
+  })
+}
+
+async function handleTotpEnable(request: Request, env: Env): Promise<Response> {
+  const authError = requireAuth(request, env)
+  if (authError) return authError
+
+  const body = await request.json() as { code?: string }
+  const code = (body.code || '').trim()
+  if (!/^\d{6}$/.test(code)) return errorResponse('请输入 6 位验证码', 400)
+
+  const pending = await env.RATE_LIMIT.get(TOTP_SETUP_PENDING_KEY, 'json') as AdminTotpPending | null
+  if (!pending?.secret) {
+    return errorResponse('设置已过期，请重新开始', 400)
+  }
+
+  const ok = await verifyTotpCode(pending.secret, code, 1)
+  if (!ok) return errorResponse('验证码错误，请确认验证器已添加密钥', 401)
+
+  const config: AdminTotpConfig = {
+    enabled: true,
+    secret: pending.secret,
+    recoveryHashes: pending.recoveryHashes || [],
+    createdAt: new Date().toISOString(),
+  }
+  await env.RATE_LIMIT.put(TOTP_CONFIG_KEY, JSON.stringify(config))
+  await env.RATE_LIMIT.delete(TOTP_SETUP_PENDING_KEY)
+
+  return jsonResponse({
+    success: true,
+    recoveryCodesRemaining: config.recoveryHashes.length,
+  })
+}
+
+async function handleTotpDisable(request: Request, env: Env): Promise<Response> {
+  const authError = requireAuth(request, env)
+  if (authError) return authError
+
+  const config = await getTotpConfig(env)
+  if (!config) return errorResponse('两步验证未启用', 400)
+
+  // Legacy env-only secret cannot be disabled from frontend.
+  const hasKvConfig = Boolean(await env.RATE_LIMIT.get(TOTP_CONFIG_KEY))
+  if (!hasKvConfig) {
+    return errorResponse('当前使用的是 Cloudflare Secret 中的 ADMIN_TOTP_SECRET，请在 Dashboard 删除该 Secret', 400)
+  }
+
+  const body = await request.json() as { code?: string; recoveryCode?: string }
+  const code = (body.code || '').trim()
+  const recoveryCode = (body.recoveryCode || '').trim()
+
+  let ok = false
+  if (recoveryCode) {
+    const hash = await hashRecoveryCode(recoveryCode)
+    ok = config.recoveryHashes.includes(hash)
+  } else if (code) {
+    ok = await verifyTotpCode(config.secret, code, 1)
+  } else {
+    return errorResponse('请输入验证码或恢复码', 400)
+  }
+
+  if (!ok) return errorResponse(recoveryCode ? '恢复码错误或已使用' : '验证码错误', 401)
+
+  await env.RATE_LIMIT.delete(TOTP_CONFIG_KEY)
+  await env.RATE_LIMIT.delete(TOTP_SETUP_PENDING_KEY)
+  return jsonResponse({ success: true })
+}
+
+async function handleTotpRegenerateRecovery(request: Request, env: Env): Promise<Response> {
+  const authError = requireAuth(request, env)
+  if (authError) return authError
+
+  const hasKvConfig = Boolean(await env.RATE_LIMIT.get(TOTP_CONFIG_KEY))
+  if (!hasKvConfig) {
+    return errorResponse('仅支持前端启用的两步验证重新生成恢复码', 400)
+  }
+
+  const config = await getTotpConfig(env)
+  if (!config) return errorResponse('两步验证未启用', 400)
+
+  const body = await request.json() as { code?: string }
+  const code = (body.code || '').trim()
+  if (!/^\d{6}$/.test(code)) return errorResponse('请输入 6 位验证码', 400)
+
+  const ok = await verifyTotpCode(config.secret, code, 1)
+  if (!ok) return errorResponse('验证码错误', 401)
+
+  const recoveryCodes = generateRecoveryCodes(8)
+  const recoveryHashes = await hashRecoveryCodes(recoveryCodes)
+  await env.RATE_LIMIT.put(TOTP_CONFIG_KEY, JSON.stringify({
+    ...config,
+    recoveryHashes,
+  }))
+
+  return jsonResponse({ success: true, recoveryCodes })
 }
 
 /**
@@ -350,8 +659,8 @@ async function handleUpload(request: Request, env: Env): Promise<Response> {
   }
 
   const formData = await request.formData()
-  const file = formData.get('file') as File
-  const metadataStr = formData.get('metadata') as string
+  const file = formData.get('file') as unknown as File | null
+  const metadataStr = formData.get('metadata') as string | null
   const mode = formData.get('mode') as string // 'year' | 'album'
   const albumId = formData.get('albumId') as string | null
 
