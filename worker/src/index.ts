@@ -809,13 +809,15 @@ async function handleCreateCarPage(request: Request, env: Env): Promise<Response
   ]
   const loadingDuration = Math.min(10000, Math.max(1000, Number(formData.get('loadingDuration')) || 3000))
 
+  // Cap payload: sticker/meme pages don't need multi‑MB camera originals.
+  if (file.size > 2.5 * 1024 * 1024) {
+    return errorResponse('Image too large (max 2.5MB). Please compress first.', 413)
+  }
+
   const ext = (file.name.split('.').pop() || 'webp').toLowerCase()
   const slug = Math.random().toString(36).slice(2, 9)
   const imagePath = `car-pages/${slug}/image.${ext}`
-
-  await env.PHOTOS_BUCKET.put(imagePath, file.stream(), {
-    httpMetadata: { contentType: file.type || 'image/webp' },
-  })
+  const imageBytes = await file.arrayBuffer()
 
   const config: CarPageConfig = {
     slug,
@@ -827,15 +829,23 @@ async function handleCreateCarPage(request: Request, env: Env): Promise<Response
     createdAt: new Date().toISOString(),
   }
 
-  await env.PHOTOS_BUCKET.put(`car-pages/${slug}/config.json`, JSON.stringify(config), {
-    httpMetadata: { contentType: 'application/json' },
-  })
+  // Image → R2, config → KV in parallel (KV is much faster than a second R2 put).
+  await Promise.all([
+    env.PHOTOS_BUCKET.put(imagePath, imageBytes, {
+      httpMetadata: { contentType: file.type || 'image/webp' },
+    }),
+    env.RATE_LIMIT.put(`car_page:${slug}`, JSON.stringify(config)),
+  ])
 
   return jsonResponse({ success: true, slug, url: `/car/${slug}` })
 }
 
 async function handleGetCarPage(slug: string, env: Env): Promise<Response> {
   if (!slug || !/^[a-z0-9]{5,12}$/.test(slug)) return errorResponse('Invalid slug', 400)
+
+  // Prefer KV (fast). Fall back to R2 for pages created before the migration.
+  const fromKv = await env.RATE_LIMIT.get(`car_page:${slug}`, 'json')
+  if (fromKv) return jsonResponse(fromKv)
 
   const object = await env.PHOTOS_BUCKET.get(`car-pages/${slug}/config.json`)
   if (!object) return errorResponse('Not found', 404)
