@@ -14,6 +14,19 @@ interface CarRevealProps {
 
 type Phase = 'loading' | 'reveal'
 
+const CONTACT_HREF = 'tencent://message/?uin=791957992&Site=qq&Menu=yes'
+
+function PoweredByFooter({ dark }: { dark: boolean }) {
+  return (
+    <p className={`absolute bottom-4 left-0 right-0 text-center text-[11px] ${dark ? 'text-zinc-500' : 'text-zinc-400'}`}>
+      Powered by hyonelin,{' '}
+      <a href={CONTACT_HREF} className={dark ? 'text-zinc-400 underline underline-offset-2 hover:text-zinc-300' : 'text-zinc-500 underline underline-offset-2 hover:text-zinc-700'}>
+        Contact me
+      </a>
+    </p>
+  )
+}
+
 export function CarReveal({ imageUrl, loadingDuration, onDone }: CarRevealProps) {
   const [phase, setPhase] = useState<Phase>('loading')
   const [stepIdx, setStepIdx] = useState(0)
@@ -61,7 +74,7 @@ export function CarReveal({ imageUrl, loadingDuration, onDone }: CarRevealProps)
 
   if (phase === 'loading') {
     return (
-      <div className="flex min-h-full w-full flex-col items-center justify-center bg-zinc-950 px-8" style={{ minHeight: '100dvh' }}>
+      <div className="relative flex min-h-full w-full flex-col items-center justify-center bg-zinc-950 px-8" style={{ minHeight: '100dvh' }}>
         <div className="mb-10 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-500 text-white text-sm font-bold select-none">
             租
@@ -83,13 +96,14 @@ export function CarReveal({ imageUrl, loadingDuration, onDone }: CarRevealProps)
         </div>
 
         <div className="mt-12 h-8 w-8 rounded-full border-2 border-zinc-700 border-t-sky-500 animate-spin" />
+        <PoweredByFooter dark />
       </div>
     )
   }
 
   return (
     <div
-      className="flex min-h-full w-full items-center justify-center bg-white p-0"
+      className="relative flex min-h-full w-full items-center justify-center bg-white p-0"
       style={{ minHeight: '100dvh', animation: 'carFadeIn 0.4s ease' }}
     >
       <style>{`@keyframes carFadeIn { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }`}</style>
@@ -98,6 +112,7 @@ export function CarReveal({ imageUrl, loadingDuration, onDone }: CarRevealProps)
         alt="这我小车车"
         className="block h-auto w-full max-w-sm object-contain"
       />
+      <PoweredByFooter dark={false} />
     </div>
   )
 }
