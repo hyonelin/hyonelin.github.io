@@ -18,7 +18,7 @@ declare global {
 
 type AdminTab = 'photos' | 'posts' | 'security'
 type AuthStep = 'password' | 'totp'
-type TotpInputMode = 'totp' | 'recovery'
+type TotpInputMode = 'totp' | 'recovery' | 'breakglass'
 
 export function Admin() {
   usePageTitle('pageTitle.admin')
@@ -175,7 +175,9 @@ export function Admin() {
     const body =
       totpInputMode === 'recovery'
         ? { pendingToken, recoveryCode: raw }
-        : { pendingToken, code: raw.replace(/\D/g, '') }
+        : totpInputMode === 'breakglass'
+          ? { pendingToken, breakglass: raw }
+          : { pendingToken, code: raw.replace(/\D/g, '') }
 
     if (totpInputMode === 'totp' && body.code!.length !== 6) {
       setAuthError('请输入 6 位验证码')
@@ -183,6 +185,10 @@ export function Admin() {
     }
     if (totpInputMode === 'recovery' && !raw) {
       setAuthError('请输入恢复码')
+      return
+    }
+    if (totpInputMode === 'breakglass' && !raw) {
+      setAuthError('请输入紧急重置码')
       return
     }
 
@@ -197,6 +203,10 @@ export function Admin() {
       const data = await response.json()
       if (response.ok && data.success) {
         setIsAuthenticated(true)
+        if (data.totpDisabled || data.usedBreakglass) {
+          setAuthStep('password')
+          setPendingToken('')
+        }
       } else {
         setAuthError(data.error || '验证失败')
         applyRateLimitFromError(data)
@@ -232,7 +242,9 @@ export function Admin() {
                 ? '上传照片、编辑博客文章'
                 : totpInputMode === 'totp'
                   ? '请输入验证器中的 6 位动态码'
-                  : '验证器不可用时，可使用一次性恢复码'}
+                  : totpInputMode === 'recovery'
+                    ? '验证器不可用时，可使用一次性恢复码'
+                    : '验证器与恢复码都丢失时，使用 Cloudflare 紧急重置码（会关闭两步验证）'}
             </p>
 
             {rateLimitInfo.attempts > 0 && !rateLimitInfo.isLocked && !rateLimitInfo.requireTurnstile && (
@@ -299,7 +311,7 @@ export function Admin() {
                 </>
               ) : (
                 <div>
-                  <div className="mb-2 inline-flex rounded-lg border p-1">
+                  <div className="mb-2 inline-flex flex-wrap rounded-lg border p-1">
                     <button
                       type="button"
                       onClick={() => { setTotpInputMode('totp'); setTotpCode(''); setAuthError('') }}
@@ -314,24 +326,33 @@ export function Admin() {
                     >
                       恢复码
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => { setTotpInputMode('breakglass'); setTotpCode(''); setAuthError('') }}
+                      className={`rounded-md px-3 py-1.5 text-xs ${totpInputMode === 'breakglass' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
+                    >
+                      紧急重置
+                    </button>
                   </div>
                   <label className="text-sm font-medium">
-                    {totpInputMode === 'totp' ? '两步验证码' : '恢复码'}
+                    {totpInputMode === 'totp' ? '两步验证码' : totpInputMode === 'recovery' ? '恢复码' : '紧急重置码'}
                   </label>
                   <input
                     ref={totpInputRef}
                     type="text"
                     inputMode={totpInputMode === 'totp' ? 'numeric' : 'text'}
                     autoComplete={totpInputMode === 'totp' ? 'one-time-code' : 'off'}
-                    maxLength={totpInputMode === 'totp' ? 6 : 20}
+                    maxLength={totpInputMode === 'totp' ? 6 : 128}
                     value={totpCode}
                     onChange={(e) => {
                       if (totpInputMode === 'totp') {
                         const next = e.target.value.replace(/\D/g, '').slice(0, 6)
                         setTotpCode(next)
                         if (next.length === 6) handleVerifyTotp(next)
-                      } else {
+                      } else if (totpInputMode === 'recovery') {
                         setTotpCode(e.target.value.toUpperCase())
+                      } else {
+                        setTotpCode(e.target.value)
                       }
                     }}
                     onKeyDown={(e) => e.key === 'Enter' && handleVerifyTotp()}
@@ -340,9 +361,20 @@ export function Admin() {
                         ? 'text-center text-2xl font-semibold tracking-[0.35em]'
                         : 'text-center text-sm tracking-wider'
                     }`}
-                    placeholder={totpInputMode === 'totp' ? '••••••' : 'ABCD-EFGH'}
+                    placeholder={
+                      totpInputMode === 'totp'
+                        ? '••••••'
+                        : totpInputMode === 'recovery'
+                          ? 'ABCD-EFGH'
+                          : 'Cloudflare Secret: ADMIN_2FA_BREAKGLASS'
+                    }
                     disabled={rateLimitInfo.isLocked || authLoading}
                   />
+                  {totpInputMode === 'breakglass' && (
+                    <p className="mt-2 text-[11px] leading-4 text-muted-foreground">
+                      成功后会关闭两步验证并进入后台。若未配置紧急码，也可在 Cloudflare 删除 KV 键 <code className="rounded bg-muted px-1">admin_totp:config</code>。
+                    </p>
+                  )}
                   <button
                     type="button"
                     onClick={() => {

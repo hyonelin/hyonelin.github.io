@@ -16,8 +16,11 @@ remote = true
 
 # 环境变量（敏感信息，不要提交到 git）
 [vars]
-# ADMIN_PASSWORD, R2_BASE_URL, TURNSTILE_SECRET, ADMIN_TOTP_SECRET
+# ADMIN_PASSWORD, R2_BASE_URL, TURNSTILE_SECRET, ADMIN_TOTP_SECRET, ADMIN_2FA_BREAKGLASS
 # 将在 Cloudflare Dashboard 中设置为 Secrets
+# Last-resort unlock (authenticator + recovery codes lost):
+#   npx wrangler secret put ADMIN_2FA_BREAKGLASS --config wrangler.toml
+# Prefer configuring 2FA in Admin → 安全 (KV key admin_totp:config).
 
 # 开发环境配置
 [dev]
