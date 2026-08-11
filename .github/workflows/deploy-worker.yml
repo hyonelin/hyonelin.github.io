@@ -34,4 +34,6 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: worker
-          command: deploy
+          # Explicit config so wrangler does not pick up the root wrangler.jsonc
+          # (which expects ./dist assets for the Pages site).
+          command: deploy --config wrangler.toml
