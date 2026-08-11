@@ -14,21 +14,48 @@ interface CarRevealProps {
 
 type Phase = 'loading' | 'reveal'
 
-const CONTACT_HREF = 'tencent://message/?uin=791957992&Site=qq&Menu=yes'
+const QQ_NUMBER = '791957992'
 
 function PoweredByFooter({ dark }: { dark: boolean }) {
+  const [copied, setCopied] = useState(false)
   const muted = dark ? 'text-zinc-500' : 'text-zinc-400'
   const link = dark
     ? 'text-zinc-400 underline underline-offset-2 hover:text-zinc-300'
     : 'text-zinc-500 underline underline-offset-2 hover:text-zinc-700'
 
+  async function handleCopyQQ(e: React.MouseEvent) {
+    e.preventDefault()
+    try {
+      await navigator.clipboard.writeText(QQ_NUMBER)
+    } catch {
+      // Fallback for older / insecure contexts
+      const input = document.createElement('input')
+      input.value = QQ_NUMBER
+      document.body.appendChild(input)
+      input.select()
+      document.execCommand('copy')
+      document.body.removeChild(input)
+    }
+    setCopied(true)
+    window.setTimeout(() => setCopied(false), 2500)
+  }
+
   return (
-    <p className={`absolute bottom-4 left-0 right-0 px-4 text-center text-[11px] leading-5 ${muted}`}>
-      想要定制？联系QQ：
-      <a href={CONTACT_HREF} className={link}>791957992</a>
-      <br />
-      Powered by hyonelin
-    </p>
+    <div className="absolute bottom-4 left-0 right-0 px-4 text-center">
+      <p className={`text-[11px] leading-5 ${muted}`}>
+        想要定制？联系QQ：
+        <button type="button" onClick={handleCopyQQ} className={`${link} cursor-pointer bg-transparent p-0 font-inherit`}>
+          {QQ_NUMBER}
+        </button>
+        <br />
+        Powered by hyonelin
+      </p>
+      {copied && (
+        <p className={`mt-1 text-[11px] ${dark ? 'text-sky-400' : 'text-sky-600'}`}>
+          号码已复制，黏贴到 QQ 添加
+        </p>
+      )}
+    </div>
   )
 }
 
