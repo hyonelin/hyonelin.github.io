@@ -169,6 +169,10 @@ export function AdminSecurity({ password }: AdminSecurityProps) {
         <h2 className="text-xl font-semibold">安全设置</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           在前端启用两步验证（验证器 6 位动态码），并生成丢失时可用的恢复码。
+          若验证器与恢复码都丢了，登录页可用紧急重置码（Worker Secret{' '}
+          <code className="rounded bg-muted px-1">ADMIN_2FA_BREAKGLASS</code>
+          ）关闭两步验证；再不行就删除 KV 键{' '}
+          <code className="rounded bg-muted px-1">admin_totp:config</code>。
         </p>
       </div>
 

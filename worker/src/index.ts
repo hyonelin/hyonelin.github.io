@@ -24,16 +24,23 @@ export interface Env {
   ADMIN_PASSWORD: string
   /** Optional legacy bootstrap secret. Prefer frontend-managed KV config. */
   ADMIN_TOTP_SECRET?: string
+  /**
+   * Last-resort emergency code. When set, password + this code can disable 2FA
+   * and log in if authenticator and recovery codes are both lost.
+   */
+  ADMIN_2FA_BREAKGLASS?: string
   R2_BASE_URL: string
   TURNSTILE_SECRET: string
   TURNSTILE_SITE_KEY: string
 }
 
 interface AdminTotpConfig {
-  enabled: true
-  secret: string
-  recoveryHashes: string[]
-  createdAt: string
+  enabled: boolean
+  secret?: string
+  recoveryHashes?: string[]
+  createdAt?: string
+  /** Set by breakglass so legacy ADMIN_TOTP_SECRET is ignored until re-enrolled. */
+  disabledByBreakglass?: boolean
 }
 
 interface AdminTotpPending {
@@ -409,7 +416,7 @@ async function handleVerify(request: Request, env: Env): Promise<Response> {
 }
 
 /**
- * 第二步：验证 6 位 TOTP，或使用一次性恢复码
+ * 第二步：验证 6 位 TOTP、一次性恢复码，或紧急破门码
  */
 async function handleVerifyTotp(request: Request, env: Env): Promise<Response> {
   const config = await getTotpConfig(env)
@@ -429,13 +436,15 @@ async function handleVerifyTotp(request: Request, env: Env): Promise<Response> {
     pendingToken?: string
     code?: string
     recoveryCode?: string
+    breakglass?: string
   }
   const pendingToken = (body.pendingToken || '').trim()
   const code = (body.code || '').trim()
   const recoveryCode = (body.recoveryCode || '').trim()
+  const breakglass = (body.breakglass || '').trim()
 
-  if (!pendingToken || (!code && !recoveryCode)) {
-    return errorResponse('pendingToken and code/recoveryCode are required', 400)
+  if (!pendingToken || (!code && !recoveryCode && !breakglass)) {
+    return errorResponse('pendingToken and code/recoveryCode/breakglass are required', 400)
   }
 
   const pendingKey = `totp_pending:${pendingToken}`
@@ -446,21 +455,35 @@ async function handleVerifyTotp(request: Request, env: Env): Promise<Response> {
 
   let ok = false
   let usedRecovery = false
+  let usedBreakglass = false
 
-  if (recoveryCode) {
+  if (breakglass) {
+    const expected = (env.ADMIN_2FA_BREAKGLASS || '').trim()
+    if (expected && breakglass === expected) {
+      ok = true
+      usedBreakglass = true
+      // Disable 2FA (including legacy env secret) so the user can re-enroll.
+      await env.RATE_LIMIT.put(TOTP_CONFIG_KEY, JSON.stringify({
+        enabled: false,
+        disabledByBreakglass: true,
+      } satisfies AdminTotpConfig))
+      await env.RATE_LIMIT.delete(TOTP_SETUP_PENDING_KEY)
+    }
+  } else if (recoveryCode) {
+    const hashes = config.recoveryHashes || []
     const hash = await hashRecoveryCode(recoveryCode)
-    const idx = config.recoveryHashes.indexOf(hash)
+    const idx = hashes.indexOf(hash)
     if (idx >= 0) {
       ok = true
       usedRecovery = true
-      const nextHashes = [...config.recoveryHashes]
+      const nextHashes = [...hashes]
       nextHashes.splice(idx, 1)
       await env.RATE_LIMIT.put(TOTP_CONFIG_KEY, JSON.stringify({
         ...config,
         recoveryHashes: nextHashes,
       }))
     }
-  } else {
+  } else if (config.secret) {
     ok = await verifyTotpCode(config.secret, code, 1)
   }
 
@@ -469,9 +492,14 @@ async function handleVerifyTotp(request: Request, env: Env): Promise<Response> {
     const newState = await getRateLimitState(env, ip)
     const delay = getDelay(newState.attempts)
     await new Promise(resolve => setTimeout(resolve, delay))
+    const error = breakglass
+      ? '紧急重置码错误（或未配置 ADMIN_2FA_BREAKGLASS）'
+      : recoveryCode
+        ? '恢复码错误或已使用'
+        : '验证码错误'
     return jsonResponse({
       success: false,
-      error: recoveryCode ? '恢复码错误或已使用' : '验证码错误',
+      error,
       attempts: newState.attempts,
       requireTurnstile: newState.requireTurnstile,
       delay: getDelay(newState.attempts),
@@ -480,19 +508,33 @@ async function handleVerifyTotp(request: Request, env: Env): Promise<Response> {
 
   await env.RATE_LIMIT.delete(pendingKey)
   await updateRateLimitState(env, ip, true)
+  const remaining = config.recoveryHashes?.length ?? 0
   return jsonResponse({
     success: true,
-    message: 'Verified',
+    message: usedBreakglass ? 'Breakglass accepted; 2FA disabled' : 'Verified',
     usedRecovery,
-    recoveryCodesRemaining: usedRecovery
-      ? Math.max(0, config.recoveryHashes.length - 1)
-      : config.recoveryHashes.length,
+    usedBreakglass,
+    totpDisabled: usedBreakglass,
+    recoveryCodesRemaining: usedBreakglass
+      ? 0
+      : usedRecovery
+        ? Math.max(0, remaining - 1)
+        : remaining,
   })
 }
 
 async function getTotpConfig(env: Env): Promise<AdminTotpConfig | null> {
   const fromKv = await env.RATE_LIMIT.get(TOTP_CONFIG_KEY, 'json') as AdminTotpConfig | null
-  if (fromKv?.enabled && fromKv.secret) return fromKv
+  // Explicit disable (e.g. breakglass) wins over legacy ADMIN_TOTP_SECRET.
+  if (fromKv && fromKv.enabled === false) return null
+  if (fromKv?.enabled && fromKv.secret) {
+    return {
+      enabled: true,
+      secret: fromKv.secret,
+      recoveryHashes: fromKv.recoveryHashes || [],
+      createdAt: fromKv.createdAt || '',
+    }
+  }
 
   // Legacy: env secret still counts as enabled (no recovery codes).
   if (env.ADMIN_TOTP_SECRET && env.ADMIN_TOTP_SECRET.replace(/\s+/g, '').length >= 16) {
@@ -515,10 +557,12 @@ async function handleTotpStatus(request: Request, env: Env): Promise<Response> {
   if (authError) return authError
 
   const config = await getTotpConfig(env)
+  const rawKv = await env.RATE_LIMIT.get(TOTP_CONFIG_KEY, 'json') as AdminTotpConfig | null
   return jsonResponse({
     enabled: Boolean(config),
-    recoveryCodesRemaining: config?.recoveryHashes.length ?? 0,
-    legacyEnvSecret: Boolean(env.ADMIN_TOTP_SECRET) && !(await env.RATE_LIMIT.get(TOTP_CONFIG_KEY)),
+    recoveryCodesRemaining: config?.recoveryHashes?.length ?? 0,
+    // Legacy only when env secret is active and there is no frontend-managed enabled config.
+    legacyEnvSecret: Boolean(config) && Boolean(env.ADMIN_TOTP_SECRET) && !(rawKv?.enabled && rawKv.secret),
   })
 }
 
@@ -526,7 +570,8 @@ async function handleTotpSetup(request: Request, env: Env): Promise<Response> {
   const authError = requireAuth(request, env)
   if (authError) return authError
 
-  if (await env.RATE_LIMIT.get(TOTP_CONFIG_KEY)) {
+  const existing = await env.RATE_LIMIT.get(TOTP_CONFIG_KEY, 'json') as AdminTotpConfig | null
+  if (existing?.enabled && existing.secret) {
     return errorResponse('两步验证已启用，请先关闭后再重新设置', 400)
   }
 
@@ -581,7 +626,7 @@ async function handleTotpEnable(request: Request, env: Env): Promise<Response> {
 
   return jsonResponse({
     success: true,
-    recoveryCodesRemaining: config.recoveryHashes.length,
+    recoveryCodesRemaining: config.recoveryHashes?.length ?? 0,
   })
 }
 
@@ -590,11 +635,11 @@ async function handleTotpDisable(request: Request, env: Env): Promise<Response> 
   if (authError) return authError
 
   const config = await getTotpConfig(env)
-  if (!config) return errorResponse('两步验证未启用', 400)
+  if (!config?.secret) return errorResponse('两步验证未启用', 400)
 
   // Legacy env-only secret cannot be disabled from frontend.
-  const hasKvConfig = Boolean(await env.RATE_LIMIT.get(TOTP_CONFIG_KEY))
-  if (!hasKvConfig) {
+  const rawKv = await env.RATE_LIMIT.get(TOTP_CONFIG_KEY, 'json') as AdminTotpConfig | null
+  if (!(rawKv?.enabled && rawKv.secret)) {
     return errorResponse('当前使用的是 Cloudflare Secret 中的 ADMIN_TOTP_SECRET，请在 Dashboard 删除该 Secret', 400)
   }
 
@@ -605,7 +650,7 @@ async function handleTotpDisable(request: Request, env: Env): Promise<Response> 
   let ok = false
   if (recoveryCode) {
     const hash = await hashRecoveryCode(recoveryCode)
-    ok = config.recoveryHashes.includes(hash)
+    ok = (config.recoveryHashes || []).includes(hash)
   } else if (code) {
     ok = await verifyTotpCode(config.secret, code, 1)
   } else {
@@ -623,13 +668,13 @@ async function handleTotpRegenerateRecovery(request: Request, env: Env): Promise
   const authError = requireAuth(request, env)
   if (authError) return authError
 
-  const hasKvConfig = Boolean(await env.RATE_LIMIT.get(TOTP_CONFIG_KEY))
-  if (!hasKvConfig) {
+  const rawKv = await env.RATE_LIMIT.get(TOTP_CONFIG_KEY, 'json') as AdminTotpConfig | null
+  if (!(rawKv?.enabled && rawKv.secret)) {
     return errorResponse('仅支持前端启用的两步验证重新生成恢复码', 400)
   }
 
   const config = await getTotpConfig(env)
-  if (!config) return errorResponse('两步验证未启用', 400)
+  if (!config?.secret) return errorResponse('两步验证未启用', 400)
 
   const body = await request.json() as { code?: string }
   const code = (body.code || '').trim()

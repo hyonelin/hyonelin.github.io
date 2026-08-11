@@ -162,7 +162,8 @@ https://photo-admin.<你的子域名>.workers.dev
 5. 添加环境变量 / Secrets：
    - `ADMIN_PASSWORD`: 你的管理密码
    - `R2_BASE_URL`: `https://pub-e00c2328da0440458b54fe471887ca39.r2.dev`
-   - （可选）`ADMIN_TOTP_SECRET`: Base32 密钥，配置后 Admin 登录会启用 6 位两步验证
+   - （可选）`ADMIN_TOTP_SECRET`: Base32 密钥，配置后 Admin 登录会启用 6 位两步验证（legacy，无恢复码；更推荐在 Admin → 安全 里开启）
+   - （推荐）`ADMIN_2FA_BREAKGLASS`: 验证器与恢复码都丢失时的紧急重置码
 
 6. 点击 **Save and deploy**
 
@@ -179,6 +180,18 @@ https://photo-admin.<你的子域名>.workers.dev
 丢失验证器时：登录第二步切换到「恢复码」，使用其中一个一次性恢复码进入；进入后可重新生成恢复码或关闭两步验证。
 
 > 若你曾手动配置过 Cloudflare Secret `ADMIN_TOTP_SECRET`，前端会提示这是 legacy 模式；删除该 Secret 后即可改用前端配置与恢复码。
+
+### 紧急重置（验证器 + 恢复码都丢了）
+
+1. 预先（或临时）为 Worker 设置 Secret **`ADMIN_2FA_BREAKGLASS`**（长随机字符串，离线保存）：
+   ```bash
+   cd worker
+   npx wrangler secret put ADMIN_2FA_BREAKGLASS --config wrangler.toml
+   ```
+2. 登录页输入密码 → 第二步点「紧急重置」→ 粘贴该 Secret  
+3. 校验通过后会**关闭双重验证**并进入后台，然后请立刻在「安全」页重新绑定
+
+若未配置紧急码，可在 Dashboard → Workers → `photo-admin` → KV 删除键 `admin_totp:config`（若只用过环境变量，再删除 Secret `ADMIN_TOTP_SECRET`）。
 
 ---
 
