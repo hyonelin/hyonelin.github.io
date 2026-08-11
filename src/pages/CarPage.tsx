@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { getCarPage, CarPageConfig } from '@/lib/carPages'
 import { CarReveal } from '@/components/CarReveal'
-import { CAR_LOADING_DURATION_MS, CAR_TITLE_LOADING } from '@/lib/carBrand'
+import { CAR_BRAND, CAR_LOADING_DURATION_MS, CAR_LOADING_STEPS } from '@/lib/carBrand'
 
 export function CarPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -10,7 +10,7 @@ export function CarPage() {
   const [error, setError] = useState(false)
 
   useEffect(() => {
-    document.title = CAR_TITLE_LOADING
+    document.title = `${CAR_BRAND} - 车辆解锁中`
   }, [])
 
   useEffect(() => {
@@ -39,6 +39,8 @@ export function CarPage() {
   return (
     <CarReveal
       imageUrl={config.imageUrl}
+      brand={config.brand || CAR_BRAND}
+      loadingSteps={config.loadingSteps?.length ? config.loadingSteps : CAR_LOADING_STEPS}
       loadingDuration={config.loadingDuration || CAR_LOADING_DURATION_MS}
     />
   )

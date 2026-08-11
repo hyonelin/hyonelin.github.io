@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Loader2, AlertCircle, Shield, Camera, NotebookPen } from 'lucide-react'
+import { ArrowLeft, Loader2, AlertCircle, Shield, Camera, NotebookPen, Car } from 'lucide-react'
 import { Navbar } from '@/components/Navbar'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { WORKER_URL, TURNSTILE_SITE_KEY } from '@/lib/adminApi'
 import { AdminPhotos } from '@/pages/admin/AdminPhotos'
 import { AdminPosts } from '@/pages/admin/AdminPosts'
+import { AdminCars } from '@/pages/admin/AdminCars'
 
 declare global {
   interface Window {
@@ -15,7 +16,7 @@ declare global {
   }
 }
 
-type AdminTab = 'photos' | 'posts'
+type AdminTab = 'photos' | 'posts' | 'cars'
 
 export function Admin() {
   usePageTitle('pageTitle.admin')
@@ -155,7 +156,7 @@ export function Admin() {
 
           <div className="rounded-lg border bg-card p-6">
             <h1 className="text-2xl font-bold">管理后台</h1>
-            <p className="mt-2 text-sm text-muted-foreground">上传照片、编辑博客文章</p>
+            <p className="mt-2 text-sm text-muted-foreground">上传照片、编辑博客、制作租车页</p>
 
             {rateLimitInfo.attempts > 0 && !rateLimitInfo.isLocked && !rateLimitInfo.requireTurnstile && (
               <div className="mt-4 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-sm text-yellow-600">
@@ -266,7 +267,7 @@ export function Admin() {
 
         <div className="mb-6">
           <h1 className="text-3xl font-bold">管理后台</h1>
-          <p className="mt-2 text-muted-foreground">照片上传到 R2，文章也可在线编辑并插图</p>
+          <p className="mt-2 text-muted-foreground">照片上传到 R2，文章可在线编辑，租车页仅后台可见</p>
         </div>
 
         <div className="mb-8 inline-flex rounded-lg border p-1">
@@ -290,9 +291,25 @@ export function Admin() {
             <NotebookPen className="h-4 w-4" />
             文章
           </button>
+          <button
+            type="button"
+            onClick={() => setTab('cars')}
+            className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm ${
+              tab === 'cars' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Car className="h-4 w-4" />
+            租车页
+          </button>
         </div>
 
-        {tab === 'photos' ? <AdminPhotos password={password} /> : <AdminPosts password={password} />}
+        {tab === 'photos' ? (
+          <AdminPhotos password={password} />
+        ) : tab === 'posts' ? (
+          <AdminPosts password={password} />
+        ) : (
+          <AdminCars password={password} />
+        )}
       </div>
       <Navbar />
     </main>

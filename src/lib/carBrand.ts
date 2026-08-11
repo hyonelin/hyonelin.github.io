@@ -13,4 +13,3 @@ export const CAR_LOADING_DURATION_MS = 3000
 /** Formal tab titles — no personal site prefix. */
 export const CAR_TITLE_LOADING = `${CAR_BRAND} - 车辆解锁中`
 export const CAR_TITLE_REVEAL = `${CAR_BRAND} - 用车服务`
-export const CAR_TITLE_MAKE = `${CAR_BRAND} - 分享页生成`

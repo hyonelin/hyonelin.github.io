@@ -795,27 +795,71 @@ interface CarPageConfig {
 }
 
 async function handleCreateCarPage(request: Request, env: Env): Promise<Response> {
+  const authError = requireAuth(request, env)
+  if (authError) return authError
+
   const formData = await request.formData()
   const file = formData.get('file') as File | null
   if (!file) return errorResponse('No file provided')
 
-  // Brand and steps are fixed site-wide (not client-configurable).
-  const brand = '租个痛车'
-  const loadingSteps = [
-    '正在连接车辆服务…',
-    '核验用车权限…',
-    '读取车辆状态…',
-    '下发车门授权…',
-  ]
+  const brand = ((formData.get('brand') as string | null)?.trim() || '租个痛车').slice(0, 40)
   const loadingDuration = Math.min(10000, Math.max(1000, Number(formData.get('loadingDuration')) || 3000))
 
-  const ext = (file.name.split('.').pop() || 'webp').toLowerCase()
-  const slug = Math.random().toString(36).slice(2, 9)
-  const imagePath = `car-pages/${slug}/image.${ext}`
+  let loadingSteps: string[]
+  const stepsRaw = formData.get('loadingSteps') as string | null
+  if (stepsRaw) {
+    try {
+      const parsed = JSON.parse(stepsRaw)
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        return errorResponse('loadingSteps must be a non-empty JSON array')
+      }
+      loadingSteps = parsed.map((s: unknown) => String(s).trim()).filter(Boolean).slice(0, 8)
+    } catch {
+      return errorResponse('Invalid loadingSteps JSON')
+    }
+  } else {
+    loadingSteps = [
+      '正在连接车辆服务…',
+      '核验用车权限…',
+      '读取车辆状态…',
+      '下发车门授权…',
+    ]
+  }
+  if (loadingSteps.length === 0) {
+    return errorResponse('loadingSteps must not be empty')
+  }
 
-  await env.PHOTOS_BUCKET.put(imagePath, file.stream(), {
-    httpMetadata: { contentType: file.type || 'image/webp' },
-  })
+  // Cap payload: sticker/meme pages don't need multi‑MB camera originals.
+  if (file.size > 2.5 * 1024 * 1024) {
+    return errorResponse('Image too large (max 2.5MB). Please compress first.', 413)
+  }
+
+  const customSlug = ((formData.get('slug') as string | null) || '').trim().toLowerCase()
+  let slug: string
+  if (customSlug) {
+    if (!isValidCarSlug(customSlug)) {
+      return errorResponse('Invalid slug. Use 3–32 chars: a-z, 0-9, hyphen; no leading/trailing hyphen.')
+    }
+    if (await carSlugExists(env, customSlug)) {
+      return errorResponse('Slug already taken', 409)
+    }
+    slug = customSlug
+  } else {
+    // Random slug; retry a few times on collision
+    slug = ''
+    for (let i = 0; i < 5; i++) {
+      const candidate = Math.random().toString(36).slice(2, 9)
+      if (!(await carSlugExists(env, candidate))) {
+        slug = candidate
+        break
+      }
+    }
+    if (!slug) return errorResponse('Failed to allocate slug', 500)
+  }
+
+  const ext = (file.name.split('.').pop() || 'webp').toLowerCase()
+  const imagePath = `car-pages/${slug}/image.${ext}`
+  const imageBytes = await file.arrayBuffer()
 
   const config: CarPageConfig = {
     slug,
@@ -827,15 +871,34 @@ async function handleCreateCarPage(request: Request, env: Env): Promise<Response
     createdAt: new Date().toISOString(),
   }
 
-  await env.PHOTOS_BUCKET.put(`car-pages/${slug}/config.json`, JSON.stringify(config), {
-    httpMetadata: { contentType: 'application/json' },
-  })
+  // Image → R2, config → KV in parallel (KV is much faster than a second R2 put).
+  await Promise.all([
+    env.PHOTOS_BUCKET.put(imagePath, imageBytes, {
+      httpMetadata: { contentType: file.type || 'image/webp' },
+    }),
+    env.RATE_LIMIT.put(`car_page:${slug}`, JSON.stringify(config)),
+  ])
 
   return jsonResponse({ success: true, slug, url: `/car/${slug}` })
 }
 
+function isValidCarSlug(slug: string): boolean {
+  return /^[a-z0-9](?:[a-z0-9-]{1,30}[a-z0-9])?$/.test(slug) && slug.length >= 3 && slug.length <= 32
+}
+
+async function carSlugExists(env: Env, slug: string): Promise<boolean> {
+  const fromKv = await env.RATE_LIMIT.get(`car_page:${slug}`)
+  if (fromKv) return true
+  const object = await env.PHOTOS_BUCKET.head(`car-pages/${slug}/config.json`)
+  return object !== null
+}
+
 async function handleGetCarPage(slug: string, env: Env): Promise<Response> {
-  if (!slug || !/^[a-z0-9]{5,12}$/.test(slug)) return errorResponse('Invalid slug', 400)
+  if (!slug || !isValidCarSlug(slug)) return errorResponse('Invalid slug', 400)
+
+  // Prefer KV (fast). Fall back to R2 for pages created before the migration.
+  const fromKv = await env.RATE_LIMIT.get(`car_page:${slug}`, 'json')
+  if (fromKv) return jsonResponse(fromKv)
 
   const object = await env.PHOTOS_BUCKET.get(`car-pages/${slug}/config.json`)
   if (!object) return errorResponse('Not found', 404)
