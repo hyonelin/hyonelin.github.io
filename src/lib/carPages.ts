@@ -1,4 +1,5 @@
 import { WORKER_URL } from './adminApi'
+import { compressImageForCarPage } from './compressImage'
 
 export interface CarPageConfig {
   slug: string
@@ -13,8 +14,9 @@ export async function createCarPage(
   file: File,
   loadingDuration: number,
 ): Promise<{ slug: string; url: string }> {
+  const compressed = await compressImageForCarPage(file)
   const form = new FormData()
-  form.append('file', file)
+  form.append('file', compressed)
   form.append('loadingDuration', String(loadingDuration))
 
   const res = await fetch(`${WORKER_URL}/api/car-pages`, { method: 'POST', body: form })
