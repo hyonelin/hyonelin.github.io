@@ -2,15 +2,17 @@ name = "photo-admin"
 main = "src/index.ts"
 compatibility_date = "2024-05-29"
 
-# R2 存储绑定
+# R2 存储绑定（开发时连远程真实桶）
 [[r2_buckets]]
 binding = "PHOTOS_BUCKET"
 bucket_name = "hyonelin-gallery"
+remote = true
 
-# KV 存储绑定（用于限流）
+# KV 存储绑定（用于限流，开发时连远程）
 [[kv_namespaces]]
 binding = "RATE_LIMIT"
 id = "ef97c0d372c0483f8c927a8b04ac9b47"
+remote = true
 
 # 环境变量（敏感信息，不要提交到 git）
 [vars]
