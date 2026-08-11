@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Loader2, AlertCircle, Shield, Camera, NotebookPen } from 'lucide-react'
 import { Navbar } from '@/components/Navbar'
@@ -16,15 +16,20 @@ declare global {
 }
 
 type AdminTab = 'photos' | 'posts'
+type AuthStep = 'password' | 'totp'
 
 export function Admin() {
   usePageTitle('pageTitle.admin')
 
   const [password, setPassword] = useState('')
+  const [authStep, setAuthStep] = useState<AuthStep>('password')
+  const [pendingToken, setPendingToken] = useState('')
+  const [totpCode, setTotpCode] = useState('')
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [authLoading, setAuthLoading] = useState(false)
   const [authError, setAuthError] = useState('')
   const [tab, setTab] = useState<AdminTab>('photos')
+  const totpInputRef = useRef<HTMLInputElement>(null)
 
   const [rateLimitInfo, setRateLimitInfo] = useState({
     attempts: 0,
@@ -95,7 +100,26 @@ export function Admin() {
     }
   }, [])
 
-  const handleVerify = async () => {
+  useEffect(() => {
+    if (authStep === 'totp') {
+      totpInputRef.current?.focus()
+    }
+  }, [authStep])
+
+  const applyRateLimitFromError = (data: any) => {
+    if (data.attempts !== undefined) {
+      setRateLimitInfo((prev) => ({
+        ...prev,
+        attempts: data.attempts,
+        requireTurnstile: data.requireTurnstile || false,
+        delay: data.delay || 0,
+        isLocked: Boolean(data.lockedUntil),
+        lockedUntil: data.lockedUntil || null,
+      }))
+    }
+  }
+
+  const handleVerifyPassword = async () => {
     if (rateLimitInfo.isLocked) {
       setAuthError(`账户已锁定，请 ${lockdownCountdown} 秒后重试`)
       return
@@ -118,21 +142,56 @@ export function Admin() {
       })
       const data = await response.json()
       if (response.ok && data.success) {
-        setIsAuthenticated(true)
+        if (data.requireTotp) {
+          setPendingToken(data.pendingToken || '')
+          setTotpCode('')
+          setAuthStep('totp')
+        } else {
+          setIsAuthenticated(true)
+        }
       } else {
         setAuthError(data.error || '密码错误')
-        if (data.attempts !== undefined) {
-          setRateLimitInfo((prev) => ({
-            ...prev,
-            attempts: data.attempts,
-            requireTurnstile: data.requireTurnstile || false,
-            delay: data.delay || 0,
-            isLocked: Boolean(data.lockedUntil),
-            lockedUntil: data.lockedUntil || null,
-          }))
-        }
+        applyRateLimitFromError(data)
         setTurnstileToken('')
         if (window.turnstile && rateLimitInfo.requireTurnstile) window.turnstile.reset()
+      }
+    } catch {
+      setAuthError('连接失败，请检查网络或 Worker URL')
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
+  const handleVerifyTotp = async (codeOverride?: string) => {
+    const code = (codeOverride ?? totpCode).replace(/\D/g, '')
+    if (code.length !== 6) {
+      setAuthError('请输入 6 位验证码')
+      return
+    }
+    if (rateLimitInfo.isLocked) {
+      setAuthError(`账户已锁定，请 ${lockdownCountdown} 秒后重试`)
+      return
+    }
+
+    setAuthLoading(true)
+    setAuthError('')
+    try {
+      const response = await fetch(`${WORKER_URL}/api/verify-totp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pendingToken, code }),
+      })
+      const data = await response.json()
+      if (response.ok && data.success) {
+        setIsAuthenticated(true)
+      } else {
+        setAuthError(data.error || '验证码错误')
+        applyRateLimitFromError(data)
+        setTotpCode('')
+        if (typeof data.error === 'string' && data.error.includes('过期')) {
+          setAuthStep('password')
+          setPendingToken('')
+        }
       }
     } catch {
       setAuthError('连接失败，请检查网络或 Worker URL')
@@ -155,7 +214,9 @@ export function Admin() {
 
           <div className="rounded-lg border bg-card p-6">
             <h1 className="text-2xl font-bold">管理后台</h1>
-            <p className="mt-2 text-sm text-muted-foreground">上传照片、编辑博客文章</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {authStep === 'password' ? '上传照片、编辑博客文章' : '请输入验证器中的 6 位动态码'}
+            </p>
 
             {rateLimitInfo.attempts > 0 && !rateLimitInfo.isLocked && !rateLimitInfo.requireTurnstile && (
               <div className="mt-4 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-sm text-yellow-600">
@@ -166,7 +227,7 @@ export function Admin() {
               </div>
             )}
 
-            {rateLimitInfo.requireTurnstile && !rateLimitInfo.isLocked && (
+            {rateLimitInfo.requireTurnstile && !rateLimitInfo.isLocked && authStep === 'password' && (
               <div className="mt-4 rounded-lg border border-orange-500/50 bg-orange-500/10 p-3 text-sm text-orange-600">
                 <div className="flex items-center gap-2">
                   <Shield className="h-4 w-4" />
@@ -185,35 +246,72 @@ export function Admin() {
             )}
 
             <div className="mt-6 space-y-4">
-              <div>
-                <label className="text-sm font-medium">密码</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
-                  className="mt-1 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="输入管理密码"
-                  disabled={rateLimitInfo.isLocked}
-                />
-              </div>
+              {authStep === 'password' ? (
+                <>
+                  <div>
+                    <label className="text-sm font-medium">密码</label>
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleVerifyPassword()}
+                      className="mt-1 w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      placeholder="输入管理密码"
+                      disabled={rateLimitInfo.isLocked}
+                    />
+                  </div>
 
-              {rateLimitInfo.requireTurnstile && !rateLimitInfo.isLocked && (
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-sm font-medium">
-                    <Shield className="h-4 w-4" />
-                    人机验证
-                  </label>
-                  <div
-                    className="cf-turnstile"
-                    data-sitekey={TURNSTILE_SITE_KEY}
-                    data-theme="light"
-                    data-callback="onTurnstileSuccess"
-                    data-expired-callback="onTurnstileExpired"
-                  />
-                  {!turnstileLoaded && (
-                    <div className="text-xs text-muted-foreground">加载验证组件…</div>
+                  {rateLimitInfo.requireTurnstile && !rateLimitInfo.isLocked && (
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 text-sm font-medium">
+                        <Shield className="h-4 w-4" />
+                        人机验证
+                      </label>
+                      <div
+                        className="cf-turnstile"
+                        data-sitekey={TURNSTILE_SITE_KEY}
+                        data-theme="light"
+                        data-callback="onTurnstileSuccess"
+                        data-expired-callback="onTurnstileExpired"
+                      />
+                      {!turnstileLoaded && (
+                        <div className="text-xs text-muted-foreground">加载验证组件…</div>
+                      )}
+                    </div>
                   )}
+                </>
+              ) : (
+                <div>
+                  <label className="text-sm font-medium">两步验证码</label>
+                  <input
+                    ref={totpInputRef}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    value={totpCode}
+                    onChange={(e) => {
+                      const next = e.target.value.replace(/\D/g, '').slice(0, 6)
+                      setTotpCode(next)
+                      if (next.length === 6) handleVerifyTotp(next)
+                    }}
+                    onKeyDown={(e) => e.key === 'Enter' && handleVerifyTotp()}
+                    className="mt-1 w-full rounded-lg border bg-background px-4 py-3 text-center text-2xl font-semibold tracking-[0.35em] focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="••••••"
+                    disabled={rateLimitInfo.isLocked || authLoading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthStep('password')
+                      setPendingToken('')
+                      setTotpCode('')
+                      setAuthError('')
+                    }}
+                    className="mt-2 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    ← 返回重新输入密码
+                  </button>
                 </div>
               )}
 
@@ -225,12 +323,13 @@ export function Admin() {
               )}
 
               <button
-                onClick={handleVerify}
+                onClick={() => (authStep === 'password' ? handleVerifyPassword() : handleVerifyTotp())}
                 disabled={
                   authLoading ||
-                  !password ||
                   rateLimitInfo.isLocked ||
-                  (rateLimitInfo.requireTurnstile && !turnstileToken)
+                  (authStep === 'password'
+                    ? !password || (rateLimitInfo.requireTurnstile && !turnstileToken)
+                    : totpCode.length !== 6)
                 }
                 className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
               >
@@ -241,8 +340,10 @@ export function Admin() {
                   </span>
                 ) : rateLimitInfo.isLocked ? (
                   '账户已锁定'
+                ) : authStep === 'password' ? (
+                  '下一步'
                 ) : (
-                  '进入管理后台'
+                  '验证并进入'
                 )}
               </button>
             </div>

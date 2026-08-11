@@ -159,11 +159,35 @@ https://photo-admin.<你的子域名>.workers.dev
 
 4. 点击 **Settings** → **Variables**
 
-5. 添加环境变量：
+5. 添加环境变量 / Secrets：
    - `ADMIN_PASSWORD`: 你的管理密码
    - `R2_BASE_URL`: `https://pub-e00c2328da0440458b54fe471887ca39.r2.dev`
+   - （可选）`ADMIN_TOTP_SECRET`: Base32 密钥，配置后 Admin 登录会启用 6 位两步验证
 
 6. 点击 **Save and deploy**
+
+### 启用两步验证（TOTP）
+
+1. 生成本地密钥（Base32），例如：
+
+```bash
+# macOS / Linux
+python3 - <<'PY'
+import base64, os
+print(base64.b32encode(os.urandom(20)).decode().rstrip("="))
+PY
+```
+
+2. 把密钥填到 Worker Secret：`ADMIN_TOTP_SECRET`
+3. 用 Google Authenticator / 1Password / Microsoft Authenticator 添加账号：
+   - 类型：基于时间（TOTP）
+   - 账号名：随意，如 `hyonelin admin`
+   - 密钥：上一步生成的 Base32
+   - 或手动拼 otpauth URL：
+     `otpauth://totp/hyonelin:admin?secret=你的SECRET&issuer=hyonelin&digits=6&period=30`
+4. 重新 deploy Worker 后，Admin 登录流程变为：密码 → 6 位动态码
+
+> 未配置 `ADMIN_TOTP_SECRET` 时，仍只验证密码（兼容旧行为）。
 
 ---
 

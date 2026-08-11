@@ -4,14 +4,19 @@
  * 功能:
  * 1. 密码验证
  * 2. 登录限流（失败延迟 + IP 锁定 + Turnstile）
- * 3. 图片上传到 R2
- * 4. JSON 更新（index.json 和 albums.json）
+ * 3. 可选 TOTP 两步验证（6 位动态码）
+ * 4. 图片上传到 R2
+ * 5. JSON 更新（index.json 和 albums.json）
  */
+
+import { totpEnabled, verifyTotpCode } from './totp'
 
 export interface Env {
   PHOTOS_BUCKET: R2Bucket
   RATE_LIMIT: KVNamespace
   ADMIN_PASSWORD: string
+  /** Base32 TOTP secret. When set, admin login requires a 6-digit authenticator code. */
+  ADMIN_TOTP_SECRET?: string
   R2_BASE_URL: string
   TURNSTILE_SECRET: string
   TURNSTILE_SITE_KEY: string
@@ -204,6 +209,10 @@ export default {
       if (path === '/api/verify' && request.method === 'POST') {
         return handleVerify(request, env)
       }
+
+      if (path === '/api/verify-totp' && request.method === 'POST') {
+        return handleVerifyTotp(request, env)
+      }
       
       if (path === '/api/upload' && request.method === 'POST') {
         return handleUpload(request, env)
@@ -285,7 +294,7 @@ async function handleGetRateLimit(request: Request, env: Env): Promise<Response>
 }
 
 /**
- * 验证密码
+ * 验证密码（若配置了 ADMIN_TOTP_SECRET，则进入第二步验证码）
  */
 async function handleVerify(request: Request, env: Env): Promise<Response> {
   const ip = getClientIP(request)
@@ -332,10 +341,76 @@ async function handleVerify(request: Request, env: Env): Promise<Response> {
       delay: getDelay(newState.attempts),
     }, 401)
   }
+
+  // Password OK. If TOTP is configured, issue a short-lived pending token.
+  if (totpEnabled(env.ADMIN_TOTP_SECRET)) {
+    const pendingToken = crypto.randomUUID().replace(/-/g, '')
+    await env.RATE_LIMIT.put(
+      `totp_pending:${pendingToken}`,
+      JSON.stringify({ ip, createdAt: Date.now() }),
+      { expirationTtl: 300 }, // 5 minutes
+    )
+    return jsonResponse({
+      success: true,
+      requireTotp: true,
+      pendingToken,
+      message: 'Password verified, TOTP required',
+    })
+  }
   
   // 成功，清除限流记录
   await updateRateLimitState(env, ip, true)
   
+  return jsonResponse({ success: true, requireTotp: false, message: 'Verified' })
+}
+
+/**
+ * 第二步：验证 6 位 TOTP
+ */
+async function handleVerifyTotp(request: Request, env: Env): Promise<Response> {
+  if (!totpEnabled(env.ADMIN_TOTP_SECRET)) {
+    return errorResponse('TOTP is not configured', 400)
+  }
+
+  const ip = getClientIP(request)
+  const state = await getRateLimitState(env, ip)
+  const now = Date.now()
+  if (state.lockedUntil > now) {
+    const remaining = Math.ceil((state.lockedUntil - now) / 1000)
+    return errorResponse(`账户已锁定，请 ${remaining} 秒后重试`, 429)
+  }
+
+  const body = await request.json() as { pendingToken?: string; code?: string }
+  const pendingToken = (body.pendingToken || '').trim()
+  const code = (body.code || '').trim()
+
+  if (!pendingToken || !code) {
+    return errorResponse('pendingToken and code are required', 400)
+  }
+
+  const pendingKey = `totp_pending:${pendingToken}`
+  const pending = await env.RATE_LIMIT.get(pendingKey, 'json') as { ip?: string } | null
+  if (!pending) {
+    return errorResponse('验证已过期，请重新输入密码', 401)
+  }
+
+  const ok = await verifyTotpCode(env.ADMIN_TOTP_SECRET!, code, 1)
+  if (!ok) {
+    await updateRateLimitState(env, ip, false)
+    const newState = await getRateLimitState(env, ip)
+    const delay = getDelay(newState.attempts)
+    await new Promise(resolve => setTimeout(resolve, delay))
+    return jsonResponse({
+      success: false,
+      error: '验证码错误',
+      attempts: newState.attempts,
+      requireTurnstile: newState.requireTurnstile,
+      delay: getDelay(newState.attempts),
+    }, 401)
+  }
+
+  await env.RATE_LIMIT.delete(pendingKey)
+  await updateRateLimitState(env, ip, true)
   return jsonResponse({ success: true, message: 'Verified' })
 }
 
@@ -350,8 +425,8 @@ async function handleUpload(request: Request, env: Env): Promise<Response> {
   }
 
   const formData = await request.formData()
-  const file = formData.get('file') as File
-  const metadataStr = formData.get('metadata') as string
+  const file = formData.get('file') as unknown as File | null
+  const metadataStr = formData.get('metadata') as string | null
   const mode = formData.get('mode') as string // 'year' | 'album'
   const albumId = formData.get('albumId') as string | null
 
