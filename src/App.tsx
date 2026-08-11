@@ -7,6 +7,8 @@ import { PhotoAlbumPage } from '@/pages/PhotoAlbum'
 import { Resume } from '@/pages/Resume'
 import { Admin } from '@/pages/Admin'
 import { ThisIsMyCar } from '@/pages/ThisIsMyCar'
+import { CarPage } from '@/pages/CarPage'
+import { MakeMyCar } from '@/pages/MakeMyCar'
 
 function App() {
   return (
@@ -20,6 +22,8 @@ function App() {
         <Route path="/photography/:albumId" element={<PhotoAlbumPage />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/this-is-my-car" element={<ThisIsMyCar />} />
+        <Route path="/make-my-car" element={<MakeMyCar />} />
+        <Route path="/car/:slug" element={<CarPage />} />
       </Routes>
     </BrowserRouter>
   )

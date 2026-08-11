@@ -246,6 +246,16 @@ export default {
         return handleBlogImageUpload(request, env)
       }
 
+      // Car pages (public, no auth)
+      if (path === '/api/car-pages' && request.method === 'POST') {
+        return handleCreateCarPage(request, env)
+      }
+
+      if (path.startsWith('/api/car-pages/') && request.method === 'GET') {
+        const slug = path.replace('/api/car-pages/', '')
+        return handleGetCarPage(slug, env)
+      }
+
       return errorResponse('Not Found', 404)
     } catch (error) {
       console.error('Worker error:', error)
@@ -770,6 +780,65 @@ async function handleDeleteBlogPost(request: Request, env: Env): Promise<Respons
   await writeBlogIndex(env, lang, posts)
 
   return jsonResponse({ success: true })
+}
+
+// ---------- Car Pages ----------
+
+interface CarPageConfig {
+  slug: string
+  imageUrl: string          // full R2 public URL
+  imagePath: string         // R2 key
+  loadingSteps: string[]
+  loadingDuration: number   // ms
+  brand: string
+  createdAt: string
+}
+
+async function handleCreateCarPage(request: Request, env: Env): Promise<Response> {
+  const formData = await request.formData()
+  const file = formData.get('file') as File | null
+  if (!file) return errorResponse('No file provided')
+
+  const brand = (formData.get('brand') as string | null)?.trim() || 'AutoShare'
+  const loadingDuration = Math.min(10000, Math.max(1000, Number(formData.get('loadingDuration')) || 3000))
+  const stepsRaw = formData.get('loadingSteps') as string | null
+  const loadingSteps: string[] = stepsRaw
+    ? JSON.parse(stepsRaw)
+    : ['正在连接车辆…', '核验权限…', '读取车辆信息…', '获取车门授权…']
+
+  const ext = (file.name.split('.').pop() || 'webp').toLowerCase()
+  const slug = Math.random().toString(36).slice(2, 9)
+  const imagePath = `car-pages/${slug}/image.${ext}`
+
+  await env.PHOTOS_BUCKET.put(imagePath, file.stream(), {
+    httpMetadata: { contentType: file.type || 'image/webp' },
+  })
+
+  const config: CarPageConfig = {
+    slug,
+    imageUrl: `${env.R2_BASE_URL}/${imagePath}`,
+    imagePath,
+    loadingSteps,
+    loadingDuration,
+    brand,
+    createdAt: new Date().toISOString(),
+  }
+
+  await env.PHOTOS_BUCKET.put(`car-pages/${slug}/config.json`, JSON.stringify(config), {
+    httpMetadata: { contentType: 'application/json' },
+  })
+
+  return jsonResponse({ success: true, slug, url: `/car/${slug}` })
+}
+
+async function handleGetCarPage(slug: string, env: Env): Promise<Response> {
+  if (!slug || !/^[a-z0-9]{5,12}$/.test(slug)) return errorResponse('Invalid slug', 400)
+
+  const object = await env.PHOTOS_BUCKET.get(`car-pages/${slug}/config.json`)
+  if (!object) return errorResponse('Not found', 404)
+
+  const config = await object.json()
+  return jsonResponse(config)
 }
 
 async function handleBlogImageUpload(request: Request, env: Env): Promise<Response> {
