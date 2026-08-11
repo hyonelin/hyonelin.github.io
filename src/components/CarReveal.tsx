@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react'
 import {
   CAR_BRAND,
   CAR_LOADING_STEPS,
-  CAR_TITLE_LOADING,
-  CAR_TITLE_REVEAL,
 } from '@/lib/carBrand'
 
 interface CarRevealProps {
   imageUrl: string
   loadingDuration: number  // ms
+  brand?: string
+  loadingSteps?: string[]
   onDone?: () => void
 }
 
@@ -28,7 +28,6 @@ function PoweredByFooter({ dark }: { dark: boolean }) {
     try {
       await navigator.clipboard.writeText(QQ_NUMBER)
     } catch {
-      // Fallback for older / insecure contexts
       const input = document.createElement('input')
       input.value = QQ_NUMBER
       document.body.appendChild(input)
@@ -59,25 +58,35 @@ function PoweredByFooter({ dark }: { dark: boolean }) {
   )
 }
 
-export function CarReveal({ imageUrl, loadingDuration, onDone }: CarRevealProps) {
+export function CarReveal({
+  imageUrl,
+  loadingDuration,
+  brand = CAR_BRAND,
+  loadingSteps = CAR_LOADING_STEPS,
+  onDone,
+}: CarRevealProps) {
+  const steps = loadingSteps.length > 0 ? loadingSteps : CAR_LOADING_STEPS
   const [phase, setPhase] = useState<Phase>('loading')
   const [stepIdx, setStepIdx] = useState(0)
   const [progress, setProgress] = useState(0)
 
+  const titleLoading = `${brand} - 车辆解锁中`
+  const titleReveal = `${brand} - 用车服务`
+
   useEffect(() => {
-    document.title = phase === 'loading' ? CAR_TITLE_LOADING : CAR_TITLE_REVEAL
-  }, [phase])
+    document.title = phase === 'loading' ? titleLoading : titleReveal
+  }, [phase, titleLoading, titleReveal])
 
   useEffect(() => {
     setPhase('loading')
     setStepIdx(0)
     setProgress(0)
-    document.title = CAR_TITLE_LOADING
+    document.title = titleLoading
 
-    const stepInterval = loadingDuration / (CAR_LOADING_STEPS.length + 1)
+    const stepInterval = loadingDuration / (steps.length + 1)
     const stepTimer = setInterval(() => {
       setStepIdx(i => {
-        if (i < CAR_LOADING_STEPS.length - 1) return i + 1
+        if (i < steps.length - 1) return i + 1
         clearInterval(stepTimer)
         return i
       })
@@ -102,21 +111,21 @@ export function CarReveal({ imageUrl, loadingDuration, onDone }: CarRevealProps)
       clearInterval(stepTimer)
       clearInterval(progressTimer)
     }
-  }, [imageUrl, loadingDuration])
+  }, [imageUrl, loadingDuration, brand, steps.join('|')])
 
   if (phase === 'loading') {
     return (
       <div className="relative flex min-h-full w-full flex-col items-center justify-center bg-zinc-950 px-8" style={{ minHeight: '100dvh' }}>
         <div className="mb-10 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-500 text-white text-sm font-bold select-none">
-            租
+            {brand.slice(0, 1) || '租'}
           </div>
-          <span className="text-white text-xl font-semibold tracking-wide">{CAR_BRAND}</span>
+          <span className="text-white text-xl font-semibold tracking-wide">{brand}</span>
         </div>
 
         <div className="w-full max-w-xs">
           <div className="mb-3 flex justify-between text-xs text-zinc-400">
-            <span>{CAR_LOADING_STEPS[stepIdx]}</span>
+            <span>{steps[stepIdx]}</span>
             <span>{progress}%</span>
           </div>
           <div className="h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden">

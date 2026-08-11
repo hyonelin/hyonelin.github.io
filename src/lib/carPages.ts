@@ -1,5 +1,6 @@
 import { WORKER_URL } from './adminApi'
 import { compressImageForCarPage } from './compressImage'
+import { CAR_BRAND, CAR_LOADING_STEPS } from './carBrand'
 
 export interface CarPageConfig {
   slug: string
@@ -11,19 +12,34 @@ export interface CarPageConfig {
 }
 
 export type CreateCarProgress = {
-  /** 0–100 overall */
   percent: number
-  /** Human-readable stage */
   stage: 'compressing' | 'uploading' | 'finishing'
-  /** Estimated remaining seconds; null when unknown */
   etaSeconds: number | null
+}
+
+export type CreateCarPageOptions = {
+  password: string
+  loadingDuration: number
+  brand?: string
+  loadingSteps?: string[]
+  /** Empty / omitted = random slug */
+  slug?: string
+  onProgress?: (p: CreateCarProgress) => void
 }
 
 export async function createCarPage(
   file: File,
-  loadingDuration: number,
-  onProgress?: (p: CreateCarProgress) => void,
+  options: CreateCarPageOptions,
 ): Promise<{ slug: string; url: string }> {
+  const {
+    password,
+    loadingDuration,
+    brand = CAR_BRAND,
+    loadingSteps = CAR_LOADING_STEPS,
+    slug,
+    onProgress,
+  } = options
+
   onProgress?.({ percent: 2, stage: 'compressing', etaSeconds: null })
   const compressed = await compressImageForCarPage(file)
   onProgress?.({ percent: 12, stage: 'uploading', etaSeconds: null })
@@ -31,28 +47,31 @@ export async function createCarPage(
   const form = new FormData()
   form.append('file', compressed)
   form.append('loadingDuration', String(loadingDuration))
+  form.append('brand', brand)
+  form.append('loadingSteps', JSON.stringify(loadingSteps))
+  if (slug?.trim()) form.append('slug', slug.trim().toLowerCase())
 
-  return uploadWithProgress(form, onProgress)
+  return uploadWithProgress(form, password, onProgress)
 }
 
 function uploadWithProgress(
   form: FormData,
+  password: string,
   onProgress?: (p: CreateCarProgress) => void,
 ): Promise<{ slug: string; url: string }> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest()
     xhr.open('POST', `${WORKER_URL}/api/car-pages`)
+    xhr.setRequestHeader('Authorization', `Bearer ${password}`)
 
-    const startedAt = Date.now()
     let lastLoaded = 0
-    let lastAt = startedAt
+    let lastAt = Date.now()
 
     xhr.upload.onprogress = (event) => {
       if (!event.lengthComputable) {
         onProgress?.({ percent: 50, stage: 'uploading', etaSeconds: null })
         return
       }
-      // Reserve 12% for compress, 8% for server finishing → upload maps to 12–92
       const uploadRatio = event.loaded / event.total
       const percent = Math.round(12 + uploadRatio * 80)
 
@@ -60,10 +79,9 @@ function uploadWithProgress(
       const dt = (now - lastAt) / 1000
       let etaSeconds: number | null = null
       if (dt > 0.2 && event.loaded > lastLoaded) {
-        const speed = (event.loaded - lastLoaded) / dt // bytes/s
+        const speed = (event.loaded - lastLoaded) / dt
         const remainingBytes = event.total - event.loaded
         if (speed > 0) {
-          // +1.5s cushion for Worker R2/KV work after upload completes
           etaSeconds = Math.max(1, Math.ceil(remainingBytes / speed) + 2)
         }
         lastLoaded = event.loaded
