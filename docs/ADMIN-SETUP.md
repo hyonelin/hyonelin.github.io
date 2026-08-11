@@ -168,26 +168,17 @@ https://photo-admin.<你的子域名>.workers.dev
 
 ### 启用两步验证（TOTP）
 
-1. 生成本地密钥（Base32），例如：
+推荐在 **Admin → 安全** 里前端自助开启：
 
-```bash
-# macOS / Linux
-python3 - <<'PY'
-import base64, os
-print(base64.b32encode(os.urandom(20)).decode().rstrip("="))
-PY
-```
+1. 用密码登录后台
+2. 打开「安全」标签 → 启用两步验证
+3. 用 Google Authenticator / 1Password 扫码
+4. **立刻保存 8 个恢复码**（只显示一次）
+5. 输入验证器 6 位码确认启用
 
-2. 把密钥填到 Worker Secret：`ADMIN_TOTP_SECRET`
-3. 用 Google Authenticator / 1Password / Microsoft Authenticator 添加账号：
-   - 类型：基于时间（TOTP）
-   - 账号名：随意，如 `hyonelin admin`
-   - 密钥：上一步生成的 Base32
-   - 或手动拼 otpauth URL：
-     `otpauth://totp/hyonelin:admin?secret=你的SECRET&issuer=hyonelin&digits=6&period=30`
-4. 重新 deploy Worker 后，Admin 登录流程变为：密码 → 6 位动态码
+丢失验证器时：登录第二步切换到「恢复码」，使用其中一个一次性恢复码进入；进入后可重新生成恢复码或关闭两步验证。
 
-> 未配置 `ADMIN_TOTP_SECRET` 时，仍只验证密码（兼容旧行为）。
+> 若你曾手动配置过 Cloudflare Secret `ADMIN_TOTP_SECRET`，前端会提示这是 legacy 模式；删除该 Secret 后即可改用前端配置与恢复码。
 
 ---
 

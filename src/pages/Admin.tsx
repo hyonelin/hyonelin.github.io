@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Loader2, AlertCircle, Shield, Camera, NotebookPen } from 'lucide-react'
+import { ArrowLeft, Loader2, AlertCircle, Shield, Camera, NotebookPen, Lock } from 'lucide-react'
 import { Navbar } from '@/components/Navbar'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { WORKER_URL, TURNSTILE_SITE_KEY } from '@/lib/adminApi'
 import { AdminPhotos } from '@/pages/admin/AdminPhotos'
 import { AdminPosts } from '@/pages/admin/AdminPosts'
+import { AdminSecurity } from '@/pages/admin/AdminSecurity'
 
 declare global {
   interface Window {
@@ -15,8 +16,9 @@ declare global {
   }
 }
 
-type AdminTab = 'photos' | 'posts'
+type AdminTab = 'photos' | 'posts' | 'security'
 type AuthStep = 'password' | 'totp'
+type TotpInputMode = 'totp' | 'recovery'
 
 export function Admin() {
   usePageTitle('pageTitle.admin')
@@ -25,6 +27,7 @@ export function Admin() {
   const [authStep, setAuthStep] = useState<AuthStep>('password')
   const [pendingToken, setPendingToken] = useState('')
   const [totpCode, setTotpCode] = useState('')
+  const [totpInputMode, setTotpInputMode] = useState<TotpInputMode>('totp')
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [authLoading, setAuthLoading] = useState(false)
   const [authError, setAuthError] = useState('')
@@ -163,13 +166,23 @@ export function Admin() {
   }
 
   const handleVerifyTotp = async (codeOverride?: string) => {
-    const code = (codeOverride ?? totpCode).replace(/\D/g, '')
-    if (code.length !== 6) {
+    if (rateLimitInfo.isLocked) {
+      setAuthError(`账户已锁定，请 ${lockdownCountdown} 秒后重试`)
+      return
+    }
+
+    const raw = (codeOverride ?? totpCode).trim()
+    const body =
+      totpInputMode === 'recovery'
+        ? { pendingToken, recoveryCode: raw }
+        : { pendingToken, code: raw.replace(/\D/g, '') }
+
+    if (totpInputMode === 'totp' && body.code!.length !== 6) {
       setAuthError('请输入 6 位验证码')
       return
     }
-    if (rateLimitInfo.isLocked) {
-      setAuthError(`账户已锁定，请 ${lockdownCountdown} 秒后重试`)
+    if (totpInputMode === 'recovery' && !raw) {
+      setAuthError('请输入恢复码')
       return
     }
 
@@ -179,13 +192,13 @@ export function Admin() {
       const response = await fetch(`${WORKER_URL}/api/verify-totp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pendingToken, code }),
+        body: JSON.stringify(body),
       })
       const data = await response.json()
       if (response.ok && data.success) {
         setIsAuthenticated(true)
       } else {
-        setAuthError(data.error || '验证码错误')
+        setAuthError(data.error || '验证失败')
         applyRateLimitFromError(data)
         setTotpCode('')
         if (typeof data.error === 'string' && data.error.includes('过期')) {
@@ -215,7 +228,11 @@ export function Admin() {
           <div className="rounded-lg border bg-card p-6">
             <h1 className="text-2xl font-bold">管理后台</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              {authStep === 'password' ? '上传照片、编辑博客文章' : '请输入验证器中的 6 位动态码'}
+              {authStep === 'password'
+                ? '上传照片、编辑博客文章'
+                : totpInputMode === 'totp'
+                  ? '请输入验证器中的 6 位动态码'
+                  : '验证器不可用时，可使用一次性恢复码'}
             </p>
 
             {rateLimitInfo.attempts > 0 && !rateLimitInfo.isLocked && !rateLimitInfo.requireTurnstile && (
@@ -282,22 +299,48 @@ export function Admin() {
                 </>
               ) : (
                 <div>
-                  <label className="text-sm font-medium">两步验证码</label>
+                  <div className="mb-2 inline-flex rounded-lg border p-1">
+                    <button
+                      type="button"
+                      onClick={() => { setTotpInputMode('totp'); setTotpCode(''); setAuthError('') }}
+                      className={`rounded-md px-3 py-1.5 text-xs ${totpInputMode === 'totp' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
+                    >
+                      验证码
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setTotpInputMode('recovery'); setTotpCode(''); setAuthError('') }}
+                      className={`rounded-md px-3 py-1.5 text-xs ${totpInputMode === 'recovery' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
+                    >
+                      恢复码
+                    </button>
+                  </div>
+                  <label className="text-sm font-medium">
+                    {totpInputMode === 'totp' ? '两步验证码' : '恢复码'}
+                  </label>
                   <input
                     ref={totpInputRef}
                     type="text"
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    maxLength={6}
+                    inputMode={totpInputMode === 'totp' ? 'numeric' : 'text'}
+                    autoComplete={totpInputMode === 'totp' ? 'one-time-code' : 'off'}
+                    maxLength={totpInputMode === 'totp' ? 6 : 20}
                     value={totpCode}
                     onChange={(e) => {
-                      const next = e.target.value.replace(/\D/g, '').slice(0, 6)
-                      setTotpCode(next)
-                      if (next.length === 6) handleVerifyTotp(next)
+                      if (totpInputMode === 'totp') {
+                        const next = e.target.value.replace(/\D/g, '').slice(0, 6)
+                        setTotpCode(next)
+                        if (next.length === 6) handleVerifyTotp(next)
+                      } else {
+                        setTotpCode(e.target.value.toUpperCase())
+                      }
                     }}
                     onKeyDown={(e) => e.key === 'Enter' && handleVerifyTotp()}
-                    className="mt-1 w-full rounded-lg border bg-background px-4 py-3 text-center text-2xl font-semibold tracking-[0.35em] focus:outline-none focus:ring-2 focus:ring-primary"
-                    placeholder="••••••"
+                    className={`mt-1 w-full rounded-lg border bg-background px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary ${
+                      totpInputMode === 'totp'
+                        ? 'text-center text-2xl font-semibold tracking-[0.35em]'
+                        : 'text-center text-sm tracking-wider'
+                    }`}
+                    placeholder={totpInputMode === 'totp' ? '••••••' : 'ABCD-EFGH'}
                     disabled={rateLimitInfo.isLocked || authLoading}
                   />
                   <button
@@ -306,6 +349,7 @@ export function Admin() {
                       setAuthStep('password')
                       setPendingToken('')
                       setTotpCode('')
+                      setTotpInputMode('totp')
                       setAuthError('')
                     }}
                     className="mt-2 text-xs text-muted-foreground hover:text-foreground"
@@ -329,7 +373,9 @@ export function Admin() {
                   rateLimitInfo.isLocked ||
                   (authStep === 'password'
                     ? !password || (rateLimitInfo.requireTurnstile && !turnstileToken)
-                    : totpCode.length !== 6)
+                    : totpInputMode === 'totp'
+                      ? totpCode.length !== 6
+                      : !totpCode.trim())
                 }
                 className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
               >
@@ -391,9 +437,25 @@ export function Admin() {
             <NotebookPen className="h-4 w-4" />
             文章
           </button>
+          <button
+            type="button"
+            onClick={() => setTab('security')}
+            className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm ${
+              tab === 'security' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Lock className="h-4 w-4" />
+            安全
+          </button>
         </div>
 
-        {tab === 'photos' ? <AdminPhotos password={password} /> : <AdminPosts password={password} />}
+        {tab === 'photos' ? (
+          <AdminPhotos password={password} />
+        ) : tab === 'posts' ? (
+          <AdminPosts password={password} />
+        ) : (
+          <AdminSecurity password={password} />
+        )}
       </div>
       <Navbar />
     </main>

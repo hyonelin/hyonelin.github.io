@@ -1,6 +1,17 @@
-/** Minimal TOTP (RFC 6238) helpers for Cloudflare Workers. */
+/** Minimal TOTP (RFC 6238) + recovery-code helpers for Cloudflare Workers. */
 
 const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
+
+export function base32Encode(bytes: Uint8Array): string {
+  let bits = ''
+  for (const b of bytes) bits += b.toString(2).padStart(8, '0')
+  let out = ''
+  for (let i = 0; i < bits.length; i += 5) {
+    const chunk = bits.slice(i, i + 5).padEnd(5, '0')
+    out += BASE32_ALPHABET[parseInt(chunk, 2)]
+  }
+  return out
+}
 
 export function base32Decode(input: string): Uint8Array {
   const cleaned = input.replace(/=+$/g, '').replace(/\s+/g, '').toUpperCase()
@@ -20,7 +31,6 @@ export function base32Decode(input: string): Uint8Array {
 function counterToBytes(counter: number): Uint8Array {
   const buf = new ArrayBuffer(8)
   const view = new DataView(buf)
-  // high 32 bits stay 0 for practical TOTP counters
   view.setUint32(4, counter >>> 0, false)
   return new Uint8Array(buf)
 }
@@ -40,8 +50,7 @@ async function hotp(secret: Uint8Array, counter: number, digits = 6): Promise<st
     ((sig[offset + 1] & 0xff) << 16) |
     ((sig[offset + 2] & 0xff) << 8) |
     (sig[offset + 3] & 0xff)
-  const otp = (code % 10 ** digits).toString().padStart(digits, '0')
-  return otp
+  return (code % 10 ** digits).toString().padStart(digits, '0')
 }
 
 export async function verifyTotpCode(
@@ -61,6 +70,47 @@ export async function verifyTotpCode(
   return false
 }
 
-export function totpEnabled(secret: string | undefined | null): boolean {
-  return Boolean(secret && secret.replace(/\s+/g, '').length >= 16)
+export function generateTotpSecret(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(20))
+  return base32Encode(bytes)
+}
+
+export function buildOtpauthUrl(secret: string, account = 'admin', issuer = 'hyonelin'): string {
+  const label = encodeURIComponent(`${issuer}:${account}`)
+  const params = new URLSearchParams({
+    secret,
+    issuer,
+    digits: '6',
+    period: '30',
+    algorithm: 'SHA1',
+  })
+  return `otpauth://totp/${label}?${params.toString()}`
+}
+
+const RECOVERY_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+
+export function generateRecoveryCodes(count = 8): string[] {
+  const codes: string[] = []
+  for (let i = 0; i < count; i++) {
+    const bytes = crypto.getRandomValues(new Uint8Array(8))
+    let raw = ''
+    for (const b of bytes) raw += RECOVERY_ALPHABET[b % RECOVERY_ALPHABET.length]
+    codes.push(`${raw.slice(0, 4)}-${raw.slice(4)}`)
+  }
+  return codes
+}
+
+export function normalizeRecoveryCode(code: string): string {
+  return (code || '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+}
+
+export async function hashRecoveryCode(code: string): Promise<string> {
+  const normalized = normalizeRecoveryCode(code)
+  const data = new TextEncoder().encode(normalized)
+  const digest = await crypto.subtle.digest('SHA-256', data)
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+export async function hashRecoveryCodes(codes: string[]): Promise<string[]> {
+  return Promise.all(codes.map(hashRecoveryCode))
 }
