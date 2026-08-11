@@ -799,12 +799,15 @@ async function handleCreateCarPage(request: Request, env: Env): Promise<Response
   const file = formData.get('file') as File | null
   if (!file) return errorResponse('No file provided')
 
-  const brand = (formData.get('brand') as string | null)?.trim() || 'AutoShare'
+  // Brand and steps are fixed site-wide (not client-configurable).
+  const brand = '租个痛车'
+  const loadingSteps = [
+    '正在连接车辆服务…',
+    '核验用车权限…',
+    '读取车辆状态…',
+    '下发车门授权…',
+  ]
   const loadingDuration = Math.min(10000, Math.max(1000, Number(formData.get('loadingDuration')) || 3000))
-  const stepsRaw = formData.get('loadingSteps') as string | null
-  const loadingSteps: string[] = stepsRaw
-    ? JSON.parse(stepsRaw)
-    : ['正在连接车辆…', '核验权限…', '读取车辆信息…', '获取车门授权…']
 
   const ext = (file.name.split('.').pop() || 'webp').toLowerCase()
   const slug = Math.random().toString(36).slice(2, 9)
