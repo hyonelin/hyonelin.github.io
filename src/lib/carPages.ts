@@ -11,14 +11,10 @@ export interface CarPageConfig {
 
 export async function createCarPage(
   file: File,
-  brand: string,
-  loadingSteps: string[],
   loadingDuration: number,
 ): Promise<{ slug: string; url: string }> {
   const form = new FormData()
   form.append('file', file)
-  form.append('brand', brand)
-  form.append('loadingSteps', JSON.stringify(loadingSteps))
   form.append('loadingDuration', String(loadingDuration))
 
   const res = await fetch(`${WORKER_URL}/api/car-pages`, { method: 'POST', body: form })

@@ -1,29 +1,38 @@
 import { useEffect, useState } from 'react'
+import {
+  CAR_BRAND,
+  CAR_LOADING_STEPS,
+  CAR_TITLE_LOADING,
+  CAR_TITLE_REVEAL,
+} from '@/lib/carBrand'
 
 interface CarRevealProps {
   imageUrl: string
-  brand: string
-  loadingSteps: string[]
   loadingDuration: number  // ms
   onDone?: () => void
 }
 
 type Phase = 'loading' | 'reveal'
 
-export function CarReveal({ imageUrl, brand, loadingSteps, loadingDuration, onDone }: CarRevealProps) {
+export function CarReveal({ imageUrl, loadingDuration, onDone }: CarRevealProps) {
   const [phase, setPhase] = useState<Phase>('loading')
   const [stepIdx, setStepIdx] = useState(0)
   const [progress, setProgress] = useState(0)
 
   useEffect(() => {
+    document.title = phase === 'loading' ? CAR_TITLE_LOADING : CAR_TITLE_REVEAL
+  }, [phase])
+
+  useEffect(() => {
     setPhase('loading')
     setStepIdx(0)
     setProgress(0)
+    document.title = CAR_TITLE_LOADING
 
-    const stepInterval = loadingDuration / (loadingSteps.length + 1)
+    const stepInterval = loadingDuration / (CAR_LOADING_STEPS.length + 1)
     const stepTimer = setInterval(() => {
       setStepIdx(i => {
-        if (i < loadingSteps.length - 1) return i + 1
+        if (i < CAR_LOADING_STEPS.length - 1) return i + 1
         clearInterval(stepTimer)
         return i
       })
@@ -48,21 +57,21 @@ export function CarReveal({ imageUrl, brand, loadingSteps, loadingDuration, onDo
       clearInterval(stepTimer)
       clearInterval(progressTimer)
     }
-  }, [imageUrl, brand, loadingSteps.join('|'), loadingDuration])
+  }, [imageUrl, loadingDuration])
 
   if (phase === 'loading') {
     return (
       <div className="flex min-h-full w-full flex-col items-center justify-center bg-zinc-950 px-8" style={{ minHeight: '100dvh' }}>
         <div className="mb-10 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-500 text-white font-bold text-lg select-none">
-            🚗
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-500 text-white text-sm font-bold select-none">
+            租
           </div>
-          <span className="text-white text-xl font-semibold tracking-wide">{brand}</span>
+          <span className="text-white text-xl font-semibold tracking-wide">{CAR_BRAND}</span>
         </div>
 
         <div className="w-full max-w-xs">
           <div className="mb-3 flex justify-between text-xs text-zinc-400">
-            <span>{loadingSteps[stepIdx]}</span>
+            <span>{CAR_LOADING_STEPS[stepIdx]}</span>
             <span>{progress}%</span>
           </div>
           <div className="h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden">
