@@ -147,16 +147,16 @@
   },
   "profile": {
     "location": "Shanghai, China",
-    "description": "IT Support Technician & Software Engineer",
-    "summary": "I'm an IT Support Technician at Tesla Shanghai, focused on endpoints, accounts, and workplace IT. I also build automation and small tools with Power Automate, React, and Python for the team and business users. Recently I've been exploring Dify and LLMs for everyday IT scenarios. Outside work, I enjoy photography and HomeKit / old-device DIY projects."
+    "description": "Associate IT Support Engineer & Software Engineer",
+    "summary": "I'm an Associate IT Support Engineer at Tesla Shanghai, focused on endpoints, accounts, and workplace IT. I also build automation and small tools with Power Automate, React, and Python for the team and business users. Recently I've been exploring Dify and LLMs for everyday IT scenarios. Outside work, I enjoy photography and HomeKit / old-device DIY projects."
   },
   "workExperience": {
     "tesla": {
       "company": "Tesla (Shanghai) Co., Ltd.",
-      "title": "IT Support Technician",
+      "title": "Associate IT Support Engineer",
       "location": "Shanghai",
       "start": "Apr 2022",
-      "description": "• Provide IT support for ~1,500 internal users across endpoints, accounts, workplace apps, and core services, with collaboration across APAC.\n• Work with IT and business teams to improve support workflows and reduce recurring issues.\n• Design and maintain 300+ Power Automate workflows, saving about 50 hours of manual effort each month.\n• Build internal tools with React / Python for IT support and business users.\n• Explore Dify and LLMs for knowledge Q&A and workflow assistance in IT scenarios."
+      "description": "• Promoted to Associate IT Support Engineer in Sep 2026.\n• Provide IT support for ~1,500 internal users across endpoints, accounts, workplace apps, and core services, with collaboration across APAC.\n• Work with IT and business teams to improve support workflows and reduce recurring issues.\n• Design and maintain 300+ Power Automate workflows, saving about 50 hours of manual effort each month.\n• Build internal tools with React / Python for IT support and business users.\n• Explore Dify and LLMs for knowledge Q&A and workflow assistance in IT scenarios."
     },
     "dalian": {
       "company": "Dalian Shengjie International Freight Forwarding Co., Ltd.",
