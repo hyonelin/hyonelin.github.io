@@ -147,16 +147,16 @@
   },
   "profile": {
     "location": "上海, 中国",
-    "description": "IT 技术支持工程师 & 软件工程师",
-    "summary": "我在特斯拉上海担任 IT 技术支持，负责终端、账号与办公环境相关支持。工作中也会使用 Power Automate，以及 React / Python，为团队和业务开发自动化与小工具。近期在尝试将 Dify 与大模型用于日常 IT 场景。业余喜欢摄影，也会做一些 HomeKit 与旧设备改造。"
+    "description": "Associate IT Support Engineer & 软件工程师",
+    "summary": "我在特斯拉上海担任 Associate IT Support Engineer，负责终端、账号与办公环境相关支持。工作中也会使用 Power Automate，以及 React / Python，为团队和业务开发自动化与小工具。近期在尝试将 Dify 与大模型用于日常 IT 场景。业余喜欢摄影，也会做一些 HomeKit 与旧设备改造。"
   },
   "workExperience": {
     "tesla": {
       "company": "特斯拉（上海）有限公司",
-      "title": "IT 技术支持工程师",
+      "title": "Associate IT Support Engineer",
       "location": "上海",
       "start": "2022年4月",
-      "description": "• 为约 1,500 名内部用户提供 IT 支持，覆盖终端设备、账号权限、办公软件与基础服务，并参与 APAC 相关协作。\n• 与 IT 团队及业务部门协作，优化支持流程，减少重复问题。\n• 使用 Power Automate 设计并维护 300+ 条自动化流程，每月约节省 50 小时人工。\n• 使用 React / Python 开发内部工具，提升支持与业务侧效率。\n• 探索 Dify 与大模型在知识问答、流程辅助等 IT 场景中的应用。"
+      "description": "• 2026年9月升职为 Associate IT Support Engineer。\n• 为约 1,500 名内部用户提供 IT 支持，覆盖终端设备、账号权限、办公软件与基础服务，并参与 APAC 相关协作。\n• 与 IT 团队及业务部门协作，优化支持流程，减少重复问题。\n• 使用 Power Automate 设计并维护 300+ 条自动化流程，每月约节省 50 小时人工。\n• 使用 React / Python 开发内部工具，提升支持与业务侧效率。\n• 探索 Dify 与大模型在知识问答、流程辅助等 IT 场景中的应用。"
     },
     "dalian": {
       "company": "大连盛捷国际货运代理有限公司",
