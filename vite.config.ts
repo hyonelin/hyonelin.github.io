@@ -9,8 +9,8 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  // 使用相对路径
-  base: './',
+  // Absolute base so nested routes like /car/:slug load /assets/* correctly
+  base: '/',
   server: {
     host: true,
     // Allow Cloudflare quick tunnels / other preview hosts
