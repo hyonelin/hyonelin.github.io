@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { createCarPage } from '@/lib/carPages'
+import { createCarPage, type CreateCarProgress } from '@/lib/carPages'
 import { CarReveal } from '@/components/CarReveal'
 import {
   CAR_BRAND,
@@ -7,11 +7,18 @@ import {
   CAR_TITLE_MAKE,
 } from '@/lib/carBrand'
 
+const STAGE_LABEL: Record<CreateCarProgress['stage'], string> = {
+  compressing: '正在压缩图片…',
+  uploading: '正在上传…',
+  finishing: '正在生成链接…',
+}
+
 export function MakeMyCar() {
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [duration, setDuration] = useState(CAR_LOADING_DURATION_MS / 1000)
   const [loading, setLoading] = useState(false)
+  const [progress, setProgress] = useState<CreateCarProgress | null>(null)
   const [result, setResult] = useState<{ slug: string; pageUrl: string } | null>(null)
   const [error, setError] = useState('')
   const [showPreview, setShowPreview] = useState(false)
@@ -26,6 +33,7 @@ export function MakeMyCar() {
     setPreview(URL.createObjectURL(f))
     setResult(null)
     setError('')
+    setProgress(null)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -33,11 +41,13 @@ export function MakeMyCar() {
     if (!file) { setError('请先选择图片'); return }
     setLoading(true)
     setError('')
+    setProgress({ percent: 0, stage: 'compressing', etaSeconds: null })
     try {
-      const data = await createCarPage(file, duration * 1000)
+      const data = await createCarPage(file, duration * 1000, setProgress)
       setResult({ slug: data.slug, pageUrl: `${window.location.origin}/car/${data.slug}` })
     } catch (err: any) {
       setError(err.message || '上传失败，请重试')
+      setProgress(null)
     } finally {
       setLoading(false)
     }
@@ -60,7 +70,7 @@ export function MakeMyCar() {
           <div>
             <label className="mb-1.5 block text-sm font-medium text-zinc-300">图片</label>
             <div
-              onClick={() => inputRef.current?.click()}
+              onClick={() => !loading && inputRef.current?.click()}
               className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-700 bg-zinc-900 p-6 transition hover:border-sky-500"
             >
               {preview
@@ -73,6 +83,7 @@ export function MakeMyCar() {
               type="file"
               accept="image/*"
               className="hidden"
+              disabled={loading}
               onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }}
             />
           </div>
@@ -84,12 +95,13 @@ export function MakeMyCar() {
             <input
               type="range" min={1} max={10} step={0.5}
               value={duration}
+              disabled={loading}
               onChange={e => setDuration(Number(e.target.value))}
               className="w-full accent-sky-500"
             />
           </div>
 
-          {preview && (
+          {preview && !loading && (
             <button
               type="button"
               onClick={() => setShowPreview(true)}
@@ -99,6 +111,28 @@ export function MakeMyCar() {
             </button>
           )}
 
+          {loading && progress && (
+            <div className="rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3">
+              <div className="mb-2 flex items-center justify-between text-xs text-zinc-400">
+                <span>{STAGE_LABEL[progress.stage]}</span>
+                <span className="tabular-nums text-sky-400">{progress.percent}%</span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
+                <div
+                  className="h-full rounded-full bg-sky-500 transition-all duration-200"
+                  style={{ width: `${progress.percent}%` }}
+                />
+              </div>
+              <p className="mt-2 text-[11px] text-zinc-500">
+                {progress.etaSeconds == null
+                  ? '正在处理，请稍候…'
+                  : progress.etaSeconds <= 0
+                    ? '即将完成'
+                    : `预计剩余约 ${progress.etaSeconds} 秒`}
+              </p>
+            </div>
+          )}
+
           {error && <p className="text-sm text-red-400">{error}</p>}
 
           <button
@@ -106,11 +140,11 @@ export function MakeMyCar() {
             disabled={loading}
             className="w-full rounded-lg bg-sky-500 py-2.5 font-medium text-white transition hover:bg-sky-400 disabled:opacity-50"
           >
-            {loading ? '上传中…' : '生成链接'}
+            {loading ? '处理中…' : '生成链接'}
           </button>
         </form>
 
-        {result && (
+        {result && !loading && (
           <div className="mt-6 rounded-xl border border-zinc-700 bg-zinc-900 p-4">
             <p className="mb-2 text-sm text-zinc-400">链接已生成，复制发给别人：</p>
             <div className="flex items-center gap-2">
