@@ -24,6 +24,6 @@ dist-ssr
 *.sw?
 
 # Worker
+.wrangler
 worker/.dev.vars
 worker/node_modules
-

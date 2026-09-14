@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { useEffect } from 'react'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { Home } from '@/pages/Home'
 import { Blog } from '@/pages/Blog'
 import { BlogPost } from '@/pages/BlogPost'
@@ -10,9 +11,27 @@ import { ThisIsMyCar } from '@/pages/ThisIsMyCar'
 import { CarPage } from '@/pages/CarPage'
 import { MakeMyCar } from '@/pages/MakeMyCar'
 
+function ScrollToRouteTop() {
+  const { hash, pathname } = useLocation()
+
+  useEffect(() => {
+    if (!hash) {
+      window.scrollTo({ top: 0, left: 0 })
+      return
+    }
+
+    requestAnimationFrame(() => {
+      document.querySelector(hash)?.scrollIntoView()
+    })
+  }, [hash, pathname])
+
+  return null
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToRouteTop />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/resume" element={<Resume />} />

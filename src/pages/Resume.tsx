@@ -1,11 +1,10 @@
 import { Navbar } from '@/components/Navbar'
-import { Hero } from '@/sections/Hero'
-import { About } from '@/sections/About'
 import { Skills } from '@/sections/Skills'
 import { Work } from '@/sections/Work'
 import { Education } from '@/sections/Education'
 import { Projects } from '@/sections/Projects'
 import { Contact } from '@/sections/Contact'
+import { ResumeHeader } from '@/sections/ResumeHeader'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Download } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -18,8 +17,7 @@ export function Resume() {
   return (
     <main className="relative min-h-screen bg-background px-6 py-12 sm:py-24">
       <div className="mx-auto max-w-3xl">
-        {/* 导航和下载区域 */}
-        <div className="mb-8 flex items-center justify-between">
+        <div className="no-print mb-8 flex items-center justify-between">
           <Link
             to="/"
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
@@ -53,6 +51,10 @@ export function Resume() {
             }
             
             .no-print {
+              display: none !important;
+            }
+
+            nav {
               display: none !important;
             }
             
@@ -106,25 +108,12 @@ export function Resume() {
           `}
         </style>
 
-        {/* 打印头信息 */}
-        <div className="print-only hidden border-b pb-6 mb-6">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold">HYONELIN</h1>
-            <p className="mt-1 text-muted-foreground">{t('profile.description')}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t('profile.location')} • 
-              Email: wen_xuanlin@outlook.com
-            </p>
-          </div>
-        </div>
-
         <div className="space-y-10">
-          <Hero />
-          <About />
-          <Skills />
+          <ResumeHeader />
           <Work />
-          <Education />
           <Projects variant="detailed" />
+          <Skills />
+          <Education />
           <Contact />
         </div>
 

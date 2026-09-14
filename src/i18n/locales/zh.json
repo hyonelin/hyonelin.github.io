@@ -13,6 +13,43 @@
   "hero": {
     "greeting": "Hi, I'm {{name}} 👋"
   },
+  "homeHero": {
+    "eyebrow": "个人主页",
+    "title": "把 IT 支持经验，做成自动化、工具和可复用的流程。",
+    "subtitle": "我是 William Wen，在上海做企业 IT 支持，也用 Power Automate、React、Python 和 Dify 搭建能减少重复工作的内部工具。这里是我的项目、笔记和摄影入口。",
+    "primaryCta": "查看完整简历",
+    "secondaryCta": "阅读实践笔记",
+    "highlights": {
+      "role": {
+        "label": "当前角色",
+        "value": "Tesla 上海 / Associate IT Support Engineer"
+      },
+      "automation": {
+        "label": "自动化实践",
+        "value": "300+ 流程，每月节省约 50 小时"
+      },
+      "stack": {
+        "label": "常用工具",
+        "value": "Power Automate、React、Python、Dify"
+      }
+    }
+  },
+  "homeFocus": {
+    "title": "我在做什么",
+    "description": "首页只保留方向和入口，完整履历放在简历页。",
+    "automation": {
+      "title": "IT 自动化",
+      "description": "把高频支持请求拆成可执行流程，用自动化和轻量工具减少人工重复。"
+    },
+    "ai": {
+      "title": "AI 辅助支持",
+      "description": "探索 Dify 与大模型在知识问答、流程提示和日常 IT 场景中的落地方式。"
+    },
+    "craft": {
+      "title": "摄影与记录",
+      "description": "用博客整理实践过程，也用摄影记录工作之外的观察和灵感。"
+    }
+  },
   "about": {
     "title": "关于我"
   },
@@ -69,6 +106,9 @@
     "backToHome": "返回首页",
     "download": "下载 PDF",
     "printVersion": "打印版本"
+  },
+  "resumeHeader": {
+    "eyebrow": "完整简历"
   },
   "pageTitle": {
     "home": "主页",

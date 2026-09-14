@@ -13,6 +13,43 @@
   "hero": {
     "greeting": "Hi, I'm {{name}} 👋"
   },
+  "homeHero": {
+    "eyebrow": "Personal homepage",
+    "title": "Turning IT support experience into automation, tools, and repeatable workflows.",
+    "subtitle": "I'm William Wen, an enterprise IT support engineer in Shanghai. I use Power Automate, React, Python, and Dify to build internal tools that reduce repetitive work. This site is the entry point for my projects, notes, and photography.",
+    "primaryCta": "View full resume",
+    "secondaryCta": "Read practice notes",
+    "highlights": {
+      "role": {
+        "label": "Current role",
+        "value": "Tesla Shanghai / Associate IT Support Engineer"
+      },
+      "automation": {
+        "label": "Automation practice",
+        "value": "300+ workflows, saving about 50 hours each month"
+      },
+      "stack": {
+        "label": "Tools I use",
+        "value": "Power Automate, React, Python, Dify"
+      }
+    }
+  },
+  "homeFocus": {
+    "title": "What I am working on",
+    "description": "The homepage now focuses on direction and entry points; the full timeline lives on the resume page.",
+    "automation": {
+      "title": "IT automation",
+      "description": "Breaking frequent support requests into workflows and lightweight tools to reduce repeated manual work."
+    },
+    "ai": {
+      "title": "AI-assisted support",
+      "description": "Exploring Dify and LLMs for knowledge Q&A, workflow guidance, and everyday IT support scenarios."
+    },
+    "craft": {
+      "title": "Photography and notes",
+      "description": "Using the blog to document practical work, and photography to keep a record of observations outside work."
+    }
+  },
   "about": {
     "title": "About Me"
   },
@@ -69,6 +106,9 @@
     "backToHome": "Back to Home",
     "download": "Download PDF",
     "printVersion": "Print Version"
+  },
+  "resumeHeader": {
+    "eyebrow": "Full resume"
   },
   "pageTitle": {
     "home": "Home",
