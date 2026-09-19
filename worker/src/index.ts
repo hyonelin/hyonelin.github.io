@@ -7,6 +7,7 @@
  * 3. 可选 TOTP 两步验证（6 位动态码）
  * 4. 图片上传到 R2
  * 5. JSON 更新（index.json 和 albums.json）
+ * 6. 简历 PDF 附件上传与固定下载
  */
 
 import {
@@ -52,6 +53,8 @@ interface AdminTotpPending {
 
 const TOTP_CONFIG_KEY = 'admin_totp:config'
 const TOTP_SETUP_PENDING_KEY = 'admin_totp:setup_pending'
+const RESUME_ATTACHMENT_PATH = 'attachments/resume.pdf'
+const RESUME_ATTACHMENT_META_PATH = 'attachments/resume.json'
 
 // CORS 头
 const corsHeaders = {
@@ -263,6 +266,18 @@ export default {
 
       if (path === '/api/totp/regenerate-recovery' && request.method === 'POST') {
         return handleTotpRegenerateRecovery(request, env)
+      }
+
+      if (path === '/api/resume-attachment' && request.method === 'GET') {
+        return handleGetResumeAttachment(request, env)
+      }
+
+      if (path === '/api/resume-attachment/download' && request.method === 'GET') {
+        return handleDownloadResumeAttachment(env)
+      }
+
+      if (path === '/api/resume-attachment' && request.method === 'POST') {
+        return handleUploadResumeAttachment(request, env)
       }
       
       if (path === '/api/upload' && request.method === 'POST') {
@@ -966,6 +981,145 @@ async function handleAddPhotoToAlbum(request: Request, env: Env): Promise<Respon
   }
 }
 
+// ---------- Resume Attachment ----------
+
+interface ResumeAttachmentMeta {
+  path: string
+  fileName: string
+  contentType: string
+  size: number
+  uploadedAt: string
+}
+
+function requireAuth(request: Request, env: Env): Response | null {
+  const authHeader = request.headers.get('Authorization')
+  if (!authHeader || authHeader.replace('Bearer ', '') !== env.ADMIN_PASSWORD) {
+    return errorResponse('Invalid password', 401)
+  }
+  return null
+}
+
+function cleanResumeFileName(name: string): string {
+  const cleaned = name
+    .replace(/[\/\\]/g, '-')
+    .replace(/[\u0000-\u001f\u007f]/g, '')
+    .trim()
+  const fallback = cleaned || 'resume.pdf'
+  return fallback.toLowerCase().endsWith('.pdf') ? fallback : `${fallback}.pdf`
+}
+
+function buildContentDisposition(fileName: string): string {
+  const asciiFallback = cleanResumeFileName(fileName)
+    .replace(/[^\x20-\x7E]/g, '_')
+    .replace(/["\\]/g, '_')
+  const encodedFileName = encodeURIComponent(fileName).replace(/'/g, '%27')
+  return `attachment; filename="${asciiFallback}"; filename*=UTF-8''${encodedFileName}`
+}
+
+async function readResumeAttachmentMeta(env: Env): Promise<ResumeAttachmentMeta | null> {
+  const object = await env.PHOTOS_BUCKET.get(RESUME_ATTACHMENT_META_PATH)
+  if (!object) return null
+
+  try {
+    const meta = await object.json() as Partial<ResumeAttachmentMeta>
+    if (!meta.fileName) return null
+    return {
+      path: RESUME_ATTACHMENT_PATH,
+      fileName: cleanResumeFileName(meta.fileName),
+      contentType: meta.contentType || 'application/pdf',
+      size: Number(meta.size) || 0,
+      uploadedAt: meta.uploadedAt || '',
+    }
+  } catch {
+    return null
+  }
+}
+
+function buildResumeAttachmentResponse(request: Request, meta: ResumeAttachmentMeta) {
+  const origin = new URL(request.url).origin
+  return {
+    exists: true,
+    ...meta,
+    downloadUrl: `${origin}/api/resume-attachment/download`,
+  }
+}
+
+async function getResumeAttachmentMeta(env: Env): Promise<ResumeAttachmentMeta | null> {
+  const file = await env.PHOTOS_BUCKET.head(RESUME_ATTACHMENT_PATH)
+  if (!file) return null
+
+  const savedMeta = await readResumeAttachmentMeta(env)
+  return savedMeta || {
+    path: RESUME_ATTACHMENT_PATH,
+    fileName: 'resume.pdf',
+    contentType: file.httpMetadata?.contentType || 'application/pdf',
+    size: file.size,
+    uploadedAt: file.uploaded.toISOString(),
+  }
+}
+
+async function handleGetResumeAttachment(request: Request, env: Env): Promise<Response> {
+  const meta = await getResumeAttachmentMeta(env)
+  if (!meta) return jsonResponse({ exists: false })
+  return jsonResponse(buildResumeAttachmentResponse(request, meta))
+}
+
+async function handleDownloadResumeAttachment(env: Env): Promise<Response> {
+  const object = await env.PHOTOS_BUCKET.get(RESUME_ATTACHMENT_PATH)
+  if (!object) return errorResponse('Resume PDF not found', 404)
+
+  const meta = await readResumeAttachmentMeta(env) || {
+    path: RESUME_ATTACHMENT_PATH,
+    fileName: 'resume.pdf',
+    contentType: object.httpMetadata?.contentType || 'application/pdf',
+    size: object.size,
+    uploadedAt: object.uploaded.toISOString(),
+  }
+
+  const headers = new Headers(corsHeaders)
+  headers.set('Content-Type', meta.contentType || 'application/pdf')
+  headers.set('Content-Length', String(object.size))
+  headers.set('Content-Disposition', buildContentDisposition(meta.fileName))
+  headers.set('Cache-Control', 'no-store')
+
+  return new Response(object.body, { headers })
+}
+
+async function handleUploadResumeAttachment(request: Request, env: Env): Promise<Response> {
+  const authError = requireAuth(request, env)
+  if (authError) return authError
+
+  const formData = await request.formData()
+  const file = formData.get('file') as File | null
+  if (!file) return errorResponse('No file provided')
+
+  const originalName = file.name || 'resume.pdf'
+  const isPdf = file.type === 'application/pdf' || originalName.toLowerCase().endsWith('.pdf')
+  if (!isPdf) return errorResponse('Only PDF files are supported')
+  const fileName = cleanResumeFileName(originalName)
+
+  await env.PHOTOS_BUCKET.put(RESUME_ATTACHMENT_PATH, file.stream(), {
+    httpMetadata: { contentType: 'application/pdf' },
+  })
+
+  const meta: ResumeAttachmentMeta = {
+    path: RESUME_ATTACHMENT_PATH,
+    fileName,
+    contentType: 'application/pdf',
+    size: file.size,
+    uploadedAt: new Date().toISOString(),
+  }
+
+  await env.PHOTOS_BUCKET.put(RESUME_ATTACHMENT_META_PATH, JSON.stringify(meta, null, 2), {
+    httpMetadata: { contentType: 'application/json' },
+  })
+
+  return jsonResponse({
+    success: true,
+    attachment: buildResumeAttachmentResponse(request, meta),
+  })
+}
+
 // ---------- Blog ----------
 
 type BlogLang = 'cn' | 'en'
@@ -977,14 +1131,6 @@ interface BlogIndexItem {
   description: string
   tags: string[]
   cover?: string
-}
-
-function requireAuth(request: Request, env: Env): Response | null {
-  const authHeader = request.headers.get('Authorization')
-  if (!authHeader || authHeader.replace('Bearer ', '') !== env.ADMIN_PASSWORD) {
-    return errorResponse('Invalid password', 401)
-  }
-  return null
 }
 
 function normalizeLang(lang: string | null): BlogLang {

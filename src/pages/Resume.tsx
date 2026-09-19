@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Navbar } from '@/components/Navbar'
 import { Skills } from '@/sections/Skills'
 import { Work } from '@/sections/Work'
@@ -6,13 +7,30 @@ import { Projects } from '@/sections/Projects'
 import { Contact } from '@/sections/Contact'
 import { ResumeHeader } from '@/sections/ResumeHeader'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Download } from 'lucide-react'
+import { ArrowLeft, Download, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { usePageTitle } from '@/hooks/usePageTitle'
+import { fetchResumeAttachment, type ResumeAttachment } from '@/lib/resumeAttachment'
 
 export function Resume() {
   const { t } = useTranslation()
+  const [attachment, setAttachment] = useState<ResumeAttachment | null>(null)
+  const [attachmentLoading, setAttachmentLoading] = useState(true)
   usePageTitle('pageTitle.resume')
+
+  useEffect(() => {
+    let isMounted = true
+    fetchResumeAttachment()
+      .then((file) => {
+        if (isMounted) setAttachment(file)
+      })
+      .finally(() => {
+        if (isMounted) setAttachmentLoading(false)
+      })
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   return (
     <main className="relative min-h-screen bg-background px-6 py-12 sm:py-24">
@@ -26,13 +44,25 @@ export function Resume() {
             {t('resume.backToHome')}
           </Link>
           
-          <button
-            onClick={() => window.print()}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            <Download className="h-4 w-4" />
-            {t('resume.download')}
-          </button>
+          {attachment ? (
+            <a
+              href={attachment.downloadUrl}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              <Download className="h-4 w-4" />
+              {t('resume.download')}
+            </a>
+          ) : (
+            <button
+              type="button"
+              disabled
+              title={attachmentLoading ? t('resume.downloadLoading') : t('resume.downloadUnavailable')}
+              className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground opacity-60"
+            >
+              {attachmentLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {t('resume.download')}
+            </button>
+          )}
         </div>
 
         {/* 打印样式 - 只在打印时显示 */}

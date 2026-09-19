@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Loader2, AlertCircle, Shield, Camera, NotebookPen, Lock } from 'lucide-react'
+import { ArrowLeft, Loader2, AlertCircle, Shield, Camera, NotebookPen, Lock, FileText } from 'lucide-react'
 import { Navbar } from '@/components/Navbar'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { WORKER_URL, TURNSTILE_SITE_KEY } from '@/lib/adminApi'
 import { AdminPhotos } from '@/pages/admin/AdminPhotos'
 import { AdminPosts } from '@/pages/admin/AdminPosts'
 import { AdminSecurity } from '@/pages/admin/AdminSecurity'
+import { AdminResume } from '@/pages/admin/AdminResume'
 
 declare global {
   interface Window {
@@ -16,7 +17,7 @@ declare global {
   }
 }
 
-type AdminTab = 'photos' | 'posts' | 'security'
+type AdminTab = 'photos' | 'posts' | 'resume' | 'security'
 type AuthStep = 'password' | 'totp'
 type TotpInputMode = 'totp' | 'recovery' | 'breakglass'
 
@@ -445,7 +446,7 @@ export function Admin() {
 
         <div className="mb-6">
           <h1 className="text-3xl font-bold">管理后台</h1>
-          <p className="mt-2 text-muted-foreground">照片上传到 R2，文章也可在线编辑并插图</p>
+          <p className="mt-2 text-muted-foreground">照片上传到 R2，文章和简历附件也可在线维护</p>
         </div>
 
         <div className="mb-8 inline-flex rounded-lg border p-1">
@@ -471,6 +472,16 @@ export function Admin() {
           </button>
           <button
             type="button"
+            onClick={() => setTab('resume')}
+            className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm ${
+              tab === 'resume' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <FileText className="h-4 w-4" />
+            简历
+          </button>
+          <button
+            type="button"
             onClick={() => setTab('security')}
             className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm ${
               tab === 'security' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
@@ -485,6 +496,8 @@ export function Admin() {
           <AdminPhotos password={password} />
         ) : tab === 'posts' ? (
           <AdminPosts password={password} />
+        ) : tab === 'resume' ? (
+          <AdminResume password={password} />
         ) : (
           <AdminSecurity password={password} />
         )}

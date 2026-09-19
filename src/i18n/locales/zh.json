@@ -105,6 +105,8 @@
     "title": "简历",
     "backToHome": "返回首页",
     "download": "下载 PDF",
+    "downloadLoading": "正在检查 PDF 文件",
+    "downloadUnavailable": "后台尚未上传 PDF",
     "printVersion": "打印版本"
   },
   "resumeHeader": {

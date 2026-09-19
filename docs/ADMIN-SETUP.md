@@ -10,9 +10,9 @@
 Admin 页面 (前端) → Cloudflare Worker (后端) → Cloudflare R2 (存储)
 ```
 
-- **Admin 页面**: `/admin` 路由，含「照片」与「文章」两个模块
-- **Worker**: 密码验证、照片上传、博客 CRUD、文章插图上传
-- **R2**: 存储图片、摄影索引，以及 `blogs/{cn|en}/` 下的文章
+- **Admin 页面**: `/admin` 路由，含「照片」「文章」「简历」「安全」模块
+- **Worker**: 密码验证、照片上传、博客 CRUD、文章插图上传、简历 PDF 附件上传/下载
+- **R2**: 存储图片、摄影索引、`blogs/{cn|en}/` 下的文章，以及 `attachments/resume.pdf`
 
 ### 文章能力（需重新 deploy Worker）
 

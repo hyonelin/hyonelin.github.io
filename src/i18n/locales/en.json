@@ -105,6 +105,8 @@
     "title": "Resume",
     "backToHome": "Back to Home",
     "download": "Download PDF",
+    "downloadLoading": "Checking for PDF",
+    "downloadUnavailable": "No PDF has been uploaded yet",
     "printVersion": "Print Version"
   },
   "resumeHeader": {
